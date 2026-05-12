@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { dataPemesanan, dataPengadaan, formatTanggal, formatRupiah } from "@/lib/data";
+import { formatTanggal, formatRupiah } from "@/lib/data";
+import { useAppState } from "@/lib/appState";
 import StatusBadge from "@/components/StatusBadge";
 import { Search, X } from "lucide-react";
 
@@ -9,13 +10,14 @@ type TabType = "semua" | "pemesanan" | "pengadaan";
 type FilterStatus = "semua" | "menunggu" | "diproses" | "disetujui" | "ditolak" | "selesai";
 
 export default function RiwayatPage() {
+  const { permintaanList, pengadaanList } = useAppState();
   const [tab, setTab] = useState<TabType>("semua");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("semua");
   const [search, setSearch] = useState("");
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<"pemesanan" | "pengadaan" | null>(null);
 
-  const pemesananFiltered = dataPemesanan.filter((p) => {
+  const pemesananFiltered = permintaanList.filter((p) => {
     const matchStatus = filterStatus === "semua" || p.status === filterStatus;
     const matchSearch =
       !search ||
@@ -25,7 +27,7 @@ export default function RiwayatPage() {
     return matchStatus && matchSearch;
   });
 
-  const pengadaanFiltered = dataPengadaan.filter((p) => {
+  const pengadaanFiltered = pengadaanList.filter((p) => {
     const matchStatus = filterStatus === "semua" || p.status === filterStatus;
     const matchSearch =
       !search ||
@@ -36,10 +38,10 @@ export default function RiwayatPage() {
   });
 
   const selectedPemesanan = selectedItem && selectedType === "pemesanan"
-    ? dataPemesanan.find((p) => p.id === selectedItem)
+    ? permintaanList.find((p) => p.id === selectedItem)
     : null;
   const selectedPengadaan = selectedItem && selectedType === "pengadaan"
-    ? dataPengadaan.find((p) => p.id === selectedItem)
+    ? pengadaanList.find((p) => p.id === selectedItem)
     : null;
 
   const prioritasColor = (p: string) =>
@@ -91,11 +93,10 @@ export default function RiwayatPage() {
           <button
             key={t.key}
             onClick={() => setTab(t.key as TabType)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-              tab === t.key
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${tab === t.key
                 ? "bg-[#003580] text-white shadow"
                 : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-            }`}
+              }`}
           >
             {t.label}
           </button>
@@ -118,9 +119,8 @@ export default function RiwayatPage() {
                   <div
                     key={item.id}
                     onClick={() => { setSelectedItem(item.id); setSelectedType("pemesanan"); }}
-                    className={`bg-white rounded-xl border shadow-sm p-4 cursor-pointer hover:shadow-md transition ${
-                      selectedItem === item.id && selectedType === "pemesanan" ? "border-blue-400 ring-2 ring-blue-200" : "border-gray-100"
-                    }`}
+                    className={`bg-white rounded-xl border shadow-sm p-4 cursor-pointer hover:shadow-md transition ${selectedItem === item.id && selectedType === "pemesanan" ? "border-blue-400 ring-2 ring-blue-200" : "border-gray-100"
+                      }`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div>
@@ -156,9 +156,8 @@ export default function RiwayatPage() {
                   <div
                     key={item.id}
                     onClick={() => { setSelectedItem(item.id); setSelectedType("pengadaan"); }}
-                    className={`bg-white rounded-xl border shadow-sm p-4 cursor-pointer hover:shadow-md transition ${
-                      selectedItem === item.id && selectedType === "pengadaan" ? "border-yellow-400 ring-2 ring-yellow-200" : "border-gray-100"
-                    }`}
+                    className={`bg-white rounded-xl border shadow-sm p-4 cursor-pointer hover:shadow-md transition ${selectedItem === item.id && selectedType === "pengadaan" ? "border-yellow-400 ring-2 ring-yellow-200" : "border-gray-100"
+                      }`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div>

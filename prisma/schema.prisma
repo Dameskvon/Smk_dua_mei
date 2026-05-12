@@ -1,0 +1,208 @@
+// ============================================================
+// Prisma Schema — SMK Dua Mei Sistem Pengadaan & Pemesanan
+// Database: MySQL (via Laragon)
+// ============================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Tabel Users (Guru, Kepala Sekolah, Admin TU, Admin IT) ──
+model User {
+  id             String   @id @default(cuid())
+  username       String   @unique
+  password       String
+  nama           String
+  jabatan        String
+  unitDepartemen String   @map("unit_departemen")
+  role           UserRole
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relasi
+  pemesananList Pemesanan[]
+  pengadaanList Pengadaan[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  guru
+  kepala_sekolah
+  admin
+  admin_it
+}
+
+// ── Tabel Pemesanan Barang ──
+model Pemesanan {
+  id               String         @id @default(cuid())
+  nomorPesanan     String         @unique @map("nomor_pesanan")
+  tanggalPesan     String         @map("tanggal_pesan")
+  namaPemesan      String         @map("nama_pemesan")
+  jabatan          String
+  unitDepartemen   String         @map("unit_departemen")
+  keperluan        String         @db.Text
+  tanggalDibutuhkan String        @map("tanggal_dibutuhkan")
+  prioritas        Prioritas
+  status           StatusPesanan  @default(menunggu)
+  catatanPemesan   String?        @map("catatan_pemesan") @db.Text
+  catatanAdmin     String?        @map("catatan_admin") @db.Text
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  // Relasi
+  userId    String?   @map("user_id")
+  user      User?     @relation(fields: [userId], references: [id])
+  barangList BarangItem[]
+  approvalSteps ApprovalStep[]
+
+  @@map("pemesanan")
+}
+
+// ── Tabel Barang Item (anak dari Pemesanan) ──
+model BarangItem {
+  id          String  @id @default(cuid())
+  namaBarang  String  @map("nama_barang")
+  jumlah      Int
+  satuan      String
+  keterangan  String? @db.Text
+  hargaSatuan Int?    @map("harga_satuan")
+
+  // Relasi ke Pemesanan
+  pemesananId String    @map("pemesanan_id")
+  pemesanan   Pemesanan @relation(fields: [pemesananId], references: [id], onDelete: Cascade)
+
+  @@map("barang_items")
+}
+
+// ── Tabel Pengadaan Barang ──
+model Pengadaan {
+  id               String        @id @default(cuid())
+  nomorPengadaan   String        @unique @map("nomor_pengadaan")
+  tanggalPengadaan String        @map("tanggal_pengadaan")
+  namaPengaju      String        @map("nama_pengaju")
+  jabatan          String
+  unitDepartemen   String        @map("unit_departemen")
+  jenisBarang      String        @map("jenis_barang")
+  spesifikasi      String        @db.Text
+  jumlah           Int
+  satuan           String
+  estimasiHarga    Int           @map("estimasi_harga")
+  tujuanPengadaan  String        @map("tujuan_pengadaan") @db.Text
+  sumberDana       String        @map("sumber_dana")
+  prioritas        Prioritas
+  status           StatusPesanan @default(menunggu)
+  dokumenPendukung String?       @map("dokumen_pendukung")
+  catatanPengaju   String?       @map("catatan_pengaju") @db.Text
+  catatanAdmin     String?       @map("catatan_admin") @db.Text
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  // Relasi
+  userId    String? @map("user_id")
+  user      User?   @relation(fields: [userId], references: [id])
+  approvalSteps ApprovalStep[]
+
+  @@map("pengadaan")
+}
+
+// ── Tabel Katalog Barang (Inventaris) ──
+model KatalogBarang {
+  id          String @id @default(cuid())
+  namaBarang  String @map("nama_barang")
+  kategori    String
+  stok        Int    @default(0)
+  satuan      String
+  hargaSatuan Int    @map("harga_satuan")
+  deskripsi   String @db.Text
+  minStok     Int    @map("min_stok")
+  gambarEmoji String @map("gambar_emoji")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("katalog_barang")
+}
+
+// ── Tabel Notifikasi ──
+model Notifikasi {
+  id             String       @id @default(cuid())
+  judul          String
+  pesan          String       @db.Text
+  tipe           TipeNotif
+  targetRole     TargetRole   @map("target_role")
+  nomorReferensi String?      @map("nomor_referensi")
+  jenisForm      JenisForm?   @map("jenis_form")
+  sudahDibaca    Boolean      @default(false) @map("sudah_dibaca")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@map("notifikasi")
+}
+
+// ── Tabel Approval Steps (Langkah Persetujuan) ──
+model ApprovalStep {
+  id              String       @id @default(cuid())
+  nomorReferensi  String       @map("nomor_referensi")
+  jenisForm       JenisForm    @map("jenis_form")
+  langkah         Int
+  status          StatusApproval
+  namaApprover    String       @map("nama_approver")
+  jabatanApprover String       @map("jabatan_approver")
+  catatan         String?      @db.Text
+  tanggal         DateTime
+
+  // Relasi opsional
+  pemesananId String?    @map("pemesanan_id")
+  pemesanan   Pemesanan? @relation(fields: [pemesananId], references: [id])
+  pengadaanId String?    @map("pengadaan_id")
+  pengadaan   Pengadaan? @relation(fields: [pengadaanId], references: [id])
+
+  @@map("approval_steps")
+}
+
+// ── Enums ──
+enum StatusPesanan {
+  menunggu
+  diproses
+  disetujui
+  ditolak
+  selesai
+  revisi
+}
+
+enum Prioritas {
+  rendah
+  sedang
+  tinggi
+}
+
+enum TipeNotif {
+  info
+  sukses
+  peringatan
+  ditolak
+}
+
+enum TargetRole {
+  pemohon
+  admin
+  kepala_sekolah
+  semua
+}
+
+enum JenisForm {
+  pemesanan
+  pengadaan
+}
+
+enum StatusApproval {
+  menunggu
+  disetujui
+  ditolak
+  revisi
+}

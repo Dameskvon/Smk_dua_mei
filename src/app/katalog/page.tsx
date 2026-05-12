@@ -1,20 +1,23 @@
+"use client";
+
 import { useState } from "react";
-import { katalogBarang } from "@/lib/data";
+import { useAppState } from "@/lib/appState";
 import { formatRupiah } from "@/lib/data";
 import { KatalogBarang } from "@/types";
 import Link from "next/link";
 import { ItemIcon } from "@/components/Icons";
 import { Package, AlertTriangle, XCircle, X } from "lucide-react";
 
-const kategoriList = ["Semua", ...Array.from(new Set(katalogBarang.map((b) => b.kategori)))];
-
 export default function KatalogPage() {
+  const { katalogList } = useAppState();
   const [search, setSearch] = useState("");
   const [kategori, setKategori] = useState("Semua");
   const [filterStok, setFilterStok] = useState<"semua" | "tersedia" | "menipis" | "habis">("semua");
   const [selected, setSelected] = useState<KatalogBarang | null>(null);
 
-  const filtered = katalogBarang.filter((b) => {
+  const kategoriList = ["Semua", ...Array.from(new Set(katalogList.map((b) => b.kategori)))];
+
+  const filtered = katalogList.filter((b) => {
     const matchSearch = !search || b.namaBarang.toLowerCase().includes(search.toLowerCase()) || b.kategori.toLowerCase().includes(search.toLowerCase());
     const matchKat = kategori === "Semua" || b.kategori === kategori;
     const matchStok =
@@ -32,10 +35,10 @@ export default function KatalogPage() {
   };
 
   const summary = {
-    total: katalogBarang.length,
-    tersedia: katalogBarang.filter((b) => b.stok > b.minStok).length,
-    menipis: katalogBarang.filter((b) => b.stok > 0 && b.stok <= b.minStok).length,
-    habis: katalogBarang.filter((b) => b.stok === 0).length,
+    total: katalogList.length,
+    tersedia: katalogList.filter((b) => b.stok > b.minStok).length,
+    menipis: katalogList.filter((b) => b.stok > 0 && b.stok <= b.minStok).length,
+    habis: katalogList.filter((b) => b.stok === 0).length,
   };
 
   return (
@@ -158,7 +161,7 @@ export default function KatalogPage() {
               })}
             </div>
           )}
-          <p className="text-xs text-gray-400 mt-4 text-center">Menampilkan {filtered.length} dari {katalogBarang.length} barang</p>
+          <p className="text-xs text-gray-400 mt-4 text-center">Menampilkan {filtered.length} dari {katalogList.length} barang</p>
         </div>
 
         {/* Detail Panel */}

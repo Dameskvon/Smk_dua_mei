@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { AuthProvider } from "@/lib/auth";
+import { ThemeProvider } from "@/lib/theme";
+import { AppStateProvider } from "@/lib/appState";
 import Sidebar from "@/components/Sidebar";
 import Footer from "@/components/Footer";
 import { usePathname } from "next/navigation";
@@ -25,7 +27,6 @@ function AppShell({ children }: { children: React.ReactNode }) {
         {/* Top header bar */}
         <header className="bg-[#FFD700] shrink-0">
           <div className="flex items-center justify-between px-4 h-9">
-            {/* Hamburger — mobile only */}
             <button
               className="lg:hidden text-[#003580] p-1"
               onClick={() => setSidebarOpen(true)}
@@ -53,8 +54,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <AppShell>{children}</AppShell>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppStateProvider>
+          <AppShell>{children}</AppShell>
+        </AppStateProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

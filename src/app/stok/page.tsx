@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { katalogBarang, formatRupiah } from "@/lib/data";
+import { useState, useEffect } from "react";
+import { useAppState } from "@/lib/appState";
+import { formatRupiah } from "@/lib/data";
 import { KatalogBarang } from "@/types";
 import Link from "next/link";
 import { ItemIcon } from "@/components/Icons";
@@ -15,12 +16,15 @@ type FilterStok = "semua" | "tersedia" | "menipis" | "habis";
 type SortBy = "nama" | "stok_asc" | "stok_desc" | "harga_asc" | "harga_desc";
 
 export default function StokPage() {
+  const { katalogList, updateKatalogStok } = useAppState();
   const [search, setSearch] = useState("");
   const [filterStok, setFilterStok] = useState<FilterStok>("semua");
   const [sortBy, setSortBy] = useState<SortBy>("nama");
   const [kategoriFilter, setKategoriFilter] = useState("Semua");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [stokData, setStokData] = useState<KatalogBarang[]>([...katalogBarang]);
+  const [stokData, setStokData] = useState<KatalogBarang[]>([]);
+
+  useEffect(() => { setStokData([...katalogList]); }, [katalogList]);
   const [adjustAmount, setAdjustAmount] = useState<number>(0);
   const [adjustType, setAdjustType] = useState<"masuk" | "keluar">("masuk");
   const [riwayatStok, setRiwayatStok] = useState<
@@ -79,6 +83,7 @@ export default function StokPage() {
     setStokData((prev) =>
       prev.map((b) => (b.id === barang.id ? { ...b, stok: stokBaru } : b))
     );
+    updateKatalogStok(barang.id, stokBaru);
 
     setRiwayatStok((prev) => [
       {
@@ -101,7 +106,7 @@ export default function StokPage() {
     new Date(tanggal).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
 
   return (
-    <ProtectedPage allowedRoles={["kepala_sekolah", "admin"]}>
+    <ProtectedPage allowedRoles={["kepala_sekolah", "admin", "admin_it"]}>
     <main className="max-w-7xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-6">

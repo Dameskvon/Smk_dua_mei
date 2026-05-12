@@ -1,4 +1,7 @@
-import { dataPemesanan, dataPengadaan, getDashboardStats, formatRupiah, formatTanggal } from "@/lib/data";
+"use client";
+
+import { useAppState } from "@/lib/appState";
+import { formatRupiah, formatTanggal } from "@/lib/data";
 import StatusBadge from "@/components/StatusBadge";
 import {
   IconClipboard, IconTag, IconHourglass, IconRefresh, IconPencil,
@@ -8,14 +11,26 @@ import Link from "next/link";
 import ProtectedPage from "@/components/ProtectedPage";
 
 export default function DashboardPage() {
-  const stats = getDashboardStats();
-  const total = stats.totalPemesanan + stats.totalPengadaan;
+  const { permintaanList, pengadaanList } = useAppState();
 
-  // estimasiHarga sudah merupakan total anggaran (bukan per satuan)
-  const totalAnggaran = dataPengadaan.reduce((sum, p) => sum + p.estimasiHarga, 0);
-  const anggaranDisetujui = dataPengadaan
-    .filter((p) => p.status === "disetujui")
-    .reduce((sum, p) => sum + p.estimasiHarga, 0);
+  const allItems = [
+    ...permintaanList.map((p) => ({ ...p, jenis: "pemesanan" })),
+    ...pengadaanList.map((p) => ({ ...p, jenis: "pengadaan" })),
+  ];
+
+  const stats = {
+    totalPemesanan: permintaanList.length,
+    totalPengadaan: pengadaanList.length,
+    menungguPersetujuan: allItems.filter((i) => i.status === "menunggu").length,
+    diproses: allItems.filter((i) => i.status === "diproses").length,
+    selesai: allItems.filter((i) => i.status === "selesai" || i.status === "disetujui").length,
+    ditolak: allItems.filter((i) => i.status === "ditolak").length,
+    revisi: allItems.filter((i) => i.status === "revisi").length,
+  };
+
+  const total = stats.totalPemesanan + stats.totalPengadaan;
+  const totalAnggaran = pengadaanList.reduce((sum, p) => sum + p.estimasiHarga, 0);
+  const anggaranDisetujui = pengadaanList.filter((p) => p.status === "disetujui").reduce((sum, p) => sum + p.estimasiHarga, 0);
 
   const statCards = [
     { label: "Total Pemesanan", value: stats.totalPemesanan, icon: <IconClipboard size={20} />, color: "bg-blue-500", sub: "Permintaan masuk" },
@@ -26,11 +41,11 @@ export default function DashboardPage() {
     { label: "Selesai / Disetujui", value: stats.selesai, icon: <IconCheckCircle size={20} />, color: "bg-green-500", sub: "Berhasil" },
   ];
 
-  const recentPemesanan = [...dataPemesanan]
+  const recentPemesanan = [...permintaanList]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
-  const recentPengadaan = [...dataPengadaan]
+  const recentPengadaan = [...pengadaanList]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
@@ -43,9 +58,8 @@ export default function DashboardPage() {
   ].map((s) => ({ ...s, pct: total > 0 ? Math.round((s.count / total) * 100) : 0 }));
 
   return (
-    <ProtectedPage allowedRoles={["kepala_sekolah", "admin"]}>
+    <ProtectedPage allowedRoles={["kepala_sekolah", "admin", "admin_it"]}>
       <main className="max-w-7xl mx-auto px-4 py-10">
-        {/* Header */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
@@ -57,25 +71,16 @@ export default function DashboardPage() {
             <p className="text-gray-500 text-sm mt-1">Ringkasan dan statistik pemesanan serta pengadaan barang SMK Dua Mei.</p>
           </div>
           <div className="flex gap-3 flex-wrap">
-            <Link href="/pemesanan" className="bg-[#003580] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-900 transition shadow">
-              + Pemesanan
-            </Link>
-            <Link href="/pengadaan" className="bg-[#FFD700] text-[#003580] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-yellow-400 transition shadow">
-              + Pengadaan
-            </Link>
-            <Link href="/laporan" className="bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition shadow">
-              Laporan
-            </Link>
+            <Link href="/pemesanan" className="bg-[#003580] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-900 transition shadow">+ Pemesanan</Link>
+            <Link href="/pengadaan" className="bg-[#FFD700] text-[#003580] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-yellow-400 transition shadow">+ Pengadaan</Link>
+            <Link href="/laporan" className="bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition shadow">Laporan</Link>
           </div>
         </div>
 
-        {/* Stat Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {statCards.map((card) => (
             <div key={card.label} className="bg-white rounded-xl shadow border border-gray-100 p-4 text-center">
-              <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full ${card.color} text-white mb-2`}>
-                {card.icon}
-              </div>
+              <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full ${card.color} text-white mb-2`}>{card.icon}</div>
               <p className="text-2xl font-extrabold text-[#003580]">{card.value}</p>
               <p className="text-xs font-medium text-gray-700 leading-tight">{card.label}</p>
               <p className="text-xs text-gray-400 mt-0.5">{card.sub}</p>
@@ -83,28 +88,24 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Anggaran Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-gradient-to-br from-[#003580] to-[#0047AB] text-white rounded-xl shadow p-6">
             <p className="text-blue-200 text-sm mb-1">Total Estimasi Anggaran</p>
             <p className="text-3xl font-extrabold">{formatRupiah(totalAnggaran)}</p>
-            <p className="text-blue-300 text-xs mt-2">{dataPengadaan.length} item pengadaan</p>
+            <p className="text-blue-300 text-xs mt-2">{pengadaanList.length} item pengadaan</p>
           </div>
           <div className="bg-gradient-to-br from-[#FFD700] to-[#FFA500] rounded-xl shadow p-6">
             <p className="text-yellow-900 text-sm mb-1 font-medium">Anggaran Disetujui</p>
             <p className="text-3xl font-extrabold text-[#003580]">{formatRupiah(anggaranDisetujui)}</p>
-            <p className="text-yellow-800 text-xs mt-2">{dataPengadaan.filter((p) => p.status === "disetujui").length} item disetujui</p>
+            <p className="text-yellow-800 text-xs mt-2">{pengadaanList.filter((p) => p.status === "disetujui").length} item disetujui</p>
           </div>
           <div className="bg-gradient-to-br from-red-500 to-red-700 text-white rounded-xl shadow p-6">
             <p className="text-red-100 text-sm mb-1">Anggaran Ditolak</p>
-            <p className="text-3xl font-extrabold">
-              {formatRupiah(dataPengadaan.filter((p) => p.status === "ditolak").reduce((s, p) => s + p.estimasiHarga, 0))}
-            </p>
-            <p className="text-red-200 text-xs mt-2">{dataPengadaan.filter((p) => p.status === "ditolak").length} item ditolak</p>
+            <p className="text-3xl font-extrabold">{formatRupiah(pengadaanList.filter((p) => p.status === "ditolak").reduce((s, p) => s + p.estimasiHarga, 0))}</p>
+            <p className="text-red-200 text-xs mt-2">{pengadaanList.filter((p) => p.status === "ditolak").length} item ditolak</p>
           </div>
         </div>
 
-        {/* Status Distribusi */}
         <div className="bg-white rounded-xl shadow border border-gray-100 p-6 mb-8">
           <h2 className="font-bold text-[#003580] text-base mb-5">Distribusi Status (Semua Pengajuan)</h2>
           <div className="space-y-3">
@@ -120,9 +121,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Recent Tables */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Pemesanan Terbaru */}
           <div className="bg-white rounded-xl shadow border border-gray-100">
             <div className="flex items-center justify-between p-5 border-b border-gray-100">
               <h2 className="font-bold text-[#003580] text-sm">Pemesanan Terbaru</h2>
@@ -142,7 +141,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Pengadaan Terbaru */}
           <div className="bg-white rounded-xl shadow border border-gray-100">
             <div className="flex items-center justify-between p-5 border-b border-gray-100">
               <h2 className="font-bold text-[#003580] text-sm">Pengadaan Terbaru</h2>
@@ -163,7 +161,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Rekap Pengadaan Per Unit */}
         <div className="bg-white rounded-xl shadow border border-gray-100 mt-6 p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-bold text-[#003580] text-base">Rekap Pengadaan per Unit</h2>
@@ -180,12 +177,9 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {dataPengadaan.map((item) => (
+                {pengadaanList.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 transition">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-gray-800">{item.unitDepartemen}</p>
-                      <p className="text-xs text-gray-400">{item.namaPengaju}</p>
-                    </td>
+                    <td className="px-4 py-3"><p className="font-medium text-gray-800">{item.unitDepartemen}</p><p className="text-xs text-gray-400">{item.namaPengaju}</p></td>
                     <td className="px-4 py-3 text-gray-700 text-xs">{item.jenisBarang}</td>
                     <td className="px-4 py-3 font-semibold text-[#003580] text-xs">{formatRupiah(item.estimasiHarga)}</td>
                     <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
@@ -196,7 +190,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Quick Links ke fitur baru */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           {[
             { href: "/katalog", icon: <IconPackage size={28} className="text-blue-600" />, label: "Katalog Barang", color: "bg-blue-50 border-blue-300" },

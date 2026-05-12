@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { unitDepartemenList, formatRupiah } from "@/lib/data";
+import { useAppState } from "@/lib/appState";
+import { useAuth } from "@/lib/auth";
 import { CheckCircle2 } from "lucide-react";
 import ProtectedPage from "@/components/ProtectedPage";
 
@@ -51,6 +53,8 @@ const jenisBarangList = [
 const sumberDanaList = ["Dana BOS", "Dana Komite", "Dana Yayasan", "Dana APBN", "Dana Hibah", "Lainnya"];
 
 export default function PengadaanPage() {
+  const { submitPengadaan } = useAppState();
+  const { user } = useAuth();
   const [form, setForm] = useState<FormData>(initialForm);
   const [submitted, setSubmitted] = useState(false);
   const [nomorPengadaan, setNomorPengadaan] = useState("");
@@ -79,10 +83,19 @@ export default function PengadaanPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validate()) return;
-    const nomor = `PGD/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900) + 100)}`;
+    const nomor = await submitPengadaan(
+      {
+        ...form,
+        estimasiHarga: parseInt(form.estimasiHarga.replace(/\D/g, "")) || 0,
+        tanggalPengadaan: new Date().toISOString().split("T")[0],
+        dokumenPendukung: undefined,
+        catatanAdmin: undefined,
+      },
+      user?.nama ?? form.namaPengaju
+    );
     setNomorPengadaan(nomor);
     setSubmitted(true);
   };
@@ -135,7 +148,7 @@ export default function PengadaanPage() {
   }
 
   return (
-    <ProtectedPage allowedRoles={["guru", "admin"]}>
+    <ProtectedPage allowedRoles={["guru", "admin", "admin_it"]}>
     <main className="max-w-4xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-8">

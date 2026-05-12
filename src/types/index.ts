@@ -84,7 +84,7 @@ export interface Notifikasi {
   judul: string;
   pesan: string;
   tipe: "info" | "sukses" | "peringatan" | "ditolak";
-  targetRole: "pemohon" | "admin" | "semua";
+  targetRole: "pemohon" | "admin" | "kepala_sekolah" | "semua";
   nomorReferensi?: string;
   jenisForm?: JenisForm;
   sudahDibaca: boolean;

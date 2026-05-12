@@ -1,9 +1,20 @@
+"use client";
+
 import Link from "next/link";
-import { getDashboardStats } from "@/lib/data";
+import { useAppState } from "@/lib/appState";
 import { ClipboardList, Tag, Search, BarChart3, FileText, Send, ShieldCheck, UserCheck, PackageCheck } from "lucide-react";
 
 export default function HomePage() {
-  const stats = getDashboardStats();
+  const { permintaanList, pengadaanList } = useAppState();
+
+  const totalPemesanan = permintaanList.length;
+  const totalPengadaan = pengadaanList.length;
+  const menungguPersetujuan =
+    permintaanList.filter((p) => p.status === "menunggu").length +
+    pengadaanList.filter((p) => p.status === "menunggu").length;
+  const selesai =
+    permintaanList.filter((p) => p.status === "selesai" || p.status === "disetujui").length +
+    pengadaanList.filter((p) => p.status === "selesai" || p.status === "disetujui").length;
 
   const fiturList = [
     {
@@ -87,10 +98,10 @@ export default function HomePage() {
       <section className="bg-white border-b shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           {[
-            { label: "Total Pemesanan", value: stats.totalPemesanan, color: "text-blue-600" },
-            { label: "Total Pengadaan", value: stats.totalPengadaan, color: "text-yellow-600" },
-            { label: "Menunggu Proses", value: stats.menungguPersetujuan, color: "text-orange-500" },
-            { label: "Selesai / Disetujui", value: stats.selesai, color: "text-green-600" },
+            { label: "Total Pemesanan", value: totalPemesanan, color: "text-blue-600" },
+            { label: "Total Pengadaan", value: totalPengadaan, color: "text-yellow-600" },
+            { label: "Menunggu Proses", value: menungguPersetujuan, color: "text-orange-500" },
+            { label: "Selesai / Disetujui", value: selesai, color: "text-green-600" },
           ].map((s) => (
             <div key={s.label} className="p-3">
               <p className={`text-3xl font-extrabold ${s.color}`}>{s.value}</p>
