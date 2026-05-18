@@ -2,6 +2,11 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { FormPemesanan, FormPengadaan, Notifikasi, KatalogBarang } from "@/types";
+import { authFetch } from "@/lib/auth";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type Jenis = "pemesanan" | "pengadaan";
 
 interface AppStateContextType {
   permintaanList: FormPemesanan[];
@@ -9,28 +14,20 @@ interface AppStateContextType {
   notifikasiList: Notifikasi[];
   katalogList: KatalogBarang[];
   isLoading: boolean;
-
-  submitPermintaan: (
-    data: Omit<FormPemesanan, "id" | "nomorPesanan" | "status" | "createdAt" | "updatedAt">,
-    namaPemohon: string
-  ) => Promise<string>;
-
-  submitPengadaan: (
-    data: Omit<FormPengadaan, "id" | "nomorPengadaan" | "status" | "createdAt" | "updatedAt">,
-    namaPemohon: string
-  ) => Promise<string>;
-
-  setujuiItem: (id: string, jenis: "pemesanan" | "pengadaan", catatan: string, approverNama: string) => void;
-  tolakItem: (id: string, jenis: "pemesanan" | "pengadaan", alasan: string, approverNama: string) => void;
-  prosesItem: (id: string, jenis: "pemesanan" | "pengadaan") => void;
-  selesaikanItem: (id: string, jenis: "pemesanan" | "pengadaan") => void;
-
+  submitPermintaan: (data: Omit<FormPemesanan, "id" | "nomorPesanan" | "status" | "createdAt" | "updatedAt">, namaPemohon: string) => Promise<string>;
+  submitPengadaan: (data: Omit<FormPengadaan, "id" | "nomorPengadaan" | "status" | "createdAt" | "updatedAt">, namaPemohon: string) => Promise<string>;
+  setujuiItem: (id: string, jenis: Jenis, catatan: string, approverNama: string) => void;
+  tolakItem: (id: string, jenis: Jenis, alasan: string, approverNama: string) => void;
+  prosesItem: (id: string, jenis: Jenis) => void;
+  selesaikanItem: (id: string, jenis: Jenis) => void;
   tandaiBacaNotif: (id: string) => void;
   tandaiSemuaBaca: () => void;
   hapusNotif: (id: string) => void;
-
   updateKatalogStok: (id: string, stokBaru: number) => void;
+  updateKatalogItem: (id: string, data: Partial<KatalogBarang>) => void;
 }
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const AppStateContext = createContext<AppStateContextType | null>(null);
 
@@ -43,15 +40,18 @@ function buatNotif(partial: Omit<Notifikasi, "id" | "sudahDibaca" | "createdAt">
   };
 }
 
-async function saveNotif(partial: Omit<Notifikasi, "id" | "sudahDibaca" | "createdAt">) {
-  try {
-    await fetch("/api/notifikasi", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...partial, sudahDibaca: false }),
-    });
-  } catch { /* fire-and-forget */ }
+function patchApi(path: string, data: unknown) {
+  authFetch(path, { method: "PATCH", body: JSON.stringify(data) });
 }
+
+function saveNotif(partial: Omit<Notifikasi, "id" | "sudahDibaca" | "createdAt">) {
+  authFetch("/api/notifikasi", {
+    method: "POST",
+    body: JSON.stringify({ ...partial, sudahDibaca: false }),
+  }).catch(() => {});
+}
+
+// ─── Provider ────────────────────────────────────────────────────────────────
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [permintaanList, setPermintaanList] = useState<FormPemesanan[]>([]);
@@ -62,18 +62,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function loadAll() {
-      try {
-        const [pemRes, pgdRes, notifRes, katRes] = await Promise.all([
-          fetch("/api/pemesanan"),
-          fetch("/api/pengadaan"),
-          fetch("/api/notifikasi"),
-          fetch("/api/katalog"),
-        ]);
-        if (pemRes.ok) setPermintaanList(await pemRes.json());
-        if (pgdRes.ok) setPengadaanList(await pgdRes.json());
-        if (notifRes.ok) setNotifikasiList(await notifRes.json());
-        if (katRes.ok) setKatalogList(await katRes.json());
-      } catch { /* keep mock data on error */ }
+      const [pemRes, pgdRes, notifRes, katRes] = await Promise.allSettled([
+        authFetch("/api/pemesanan"),
+        authFetch("/api/pengadaan"),
+        authFetch("/api/notifikasi"),
+        authFetch("/api/katalog"),
+      ]);
+      if (pemRes.status === "fulfilled" && pemRes.value.ok) setPermintaanList(await pemRes.value.json());
+      if (pgdRes.status === "fulfilled" && pgdRes.value.ok) setPengadaanList(await pgdRes.value.json());
+      if (notifRes.status === "fulfilled" && notifRes.value.ok) setNotifikasiList(await notifRes.value.json());
+      if (katRes.status === "fulfilled" && katRes.value.ok) setKatalogList(await katRes.value.json());
       setIsLoading(false);
     }
     loadAll();
@@ -82,28 +80,26 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const addNotif = (...notifs: Notifikasi[]) =>
     setNotifikasiList((prev) => [...notifs, ...prev]);
 
+  // ─── Submit ──────────────────────────────────────────────────────────────
+
   const submitPermintaan = async (
     data: Omit<FormPemesanan, "id" | "nomorPesanan" | "status" | "createdAt" | "updatedAt">,
     namaPemohon: string
   ): Promise<string> => {
-    const res = await fetch("/api/pemesanan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    const res = await authFetch("/api/pemesanan", { method: "POST", body: JSON.stringify(data) });
     const newItem: FormPemesanan = await res.json();
     setPermintaanList((prev) => [newItem, ...prev]);
 
-    const notifData = {
+    const notif = {
       judul: "Permintaan Baru Menunggu Persetujuan",
-      pesan: `${namaPemohon} (${data.unitDepartemen}) mengajukan permintaan pemesanan barang — ${data.keperluan}. Nomor: ${newItem.nomorPesanan}.`,
+      pesan: `${namaPemohon} (${data.unitDepartemen}) mengajukan pemesanan barang — ${data.keperluan}. Nomor: ${newItem.nomorPesanan}.`,
       tipe: "info" as const,
       targetRole: "kepala_sekolah" as const,
       nomorReferensi: newItem.nomorPesanan,
       jenisForm: "pemesanan" as const,
     };
-    addNotif(buatNotif(notifData));
-    saveNotif(notifData);
+    addNotif(buatNotif(notif));
+    saveNotif(notif);
     return newItem.nomorPesanan;
   };
 
@@ -111,132 +107,125 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     data: Omit<FormPengadaan, "id" | "nomorPengadaan" | "status" | "createdAt" | "updatedAt">,
     namaPemohon: string
   ): Promise<string> => {
-    const res = await fetch("/api/pengadaan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    const res = await authFetch("/api/pengadaan", { method: "POST", body: JSON.stringify(data) });
     const newItem: FormPengadaan = await res.json();
     setPengadaanList((prev) => [newItem, ...prev]);
 
-    const notifData = {
+    const notif = {
       judul: "Pengajuan Pengadaan Baru",
-      pesan: `${namaPemohon} (${data.unitDepartemen}) mengajukan pengadaan ${data.jenisBarang} — ${data.tujuanPengadaan}. Nomor: ${newItem.nomorPengadaan}.`,
+      pesan: `${namaPemohon} (${data.unitDepartemen}) mengajukan pengadaan ${data.jenisBarang}. Nomor: ${newItem.nomorPengadaan}.`,
       tipe: "info" as const,
       targetRole: "kepala_sekolah" as const,
       nomorReferensi: newItem.nomorPengadaan,
       jenisForm: "pengadaan" as const,
     };
-    addNotif(buatNotif(notifData));
-    saveNotif(notifData);
+    addNotif(buatNotif(notif));
+    saveNotif(notif);
     return newItem.nomorPengadaan;
   };
 
-  const setujuiItem = (id: string, jenis: "pemesanan" | "pengadaan", catatan: string, approverNama: string) => {
+  // ─── Status updates ──────────────────────────────────────────────────────
+
+  const updateStatus = (
+    jenis: Jenis,
+    id: string,
+    updater: (p: FormPemesanan | FormPengadaan) => FormPemesanan | FormPengadaan
+  ) => {
     const now = new Date().toISOString();
+    if (jenis === "pemesanan") {
+      setPermintaanList((prev) => prev.map((p) => p.id === id ? { ...updater(p), updatedAt: now } as FormPemesanan : p));
+    } else {
+      setPengadaanList((prev) => prev.map((p) => p.id === id ? { ...updater(p), updatedAt: now } as FormPengadaan : p));
+    }
+  };
+
+  const setujuiItem = (id: string, jenis: Jenis, catatan: string, approverNama: string) => {
     let nomor = "", namaPemohon = "", perihal = "";
 
-    if (jenis === "pemesanan") {
-      setPermintaanList((prev) => prev.map((p) => {
-        if (p.id !== id) return p;
-        nomor = p.nomorPesanan; namaPemohon = p.namaPemesan; perihal = p.keperluan;
-        return { ...p, status: "disetujui", catatanAdmin: catatan, updatedAt: now };
-      }));
-      fetch(`/api/pemesanan/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "disetujui", catatanAdmin: catatan }) });
-    } else {
-      setPengadaanList((prev) => prev.map((p) => {
-        if (p.id !== id) return p;
-        nomor = p.nomorPengadaan; namaPemohon = p.namaPengaju; perihal = p.jenisBarang;
-        return { ...p, status: "disetujui", catatanAdmin: catatan, updatedAt: now };
-      }));
-      fetch(`/api/pengadaan/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "disetujui", catatanAdmin: catatan }) });
-    }
+    updateStatus(jenis, id, (p) => {
+      if (jenis === "pemesanan") {
+        const pm = p as FormPemesanan;
+        nomor = pm.nomorPesanan; namaPemohon = pm.namaPemesan; perihal = pm.keperluan;
+      } else {
+        const pg = p as FormPengadaan;
+        nomor = pg.nomorPengadaan; namaPemohon = pg.namaPengaju; perihal = pg.jenisBarang;
+      }
+      return { ...p, status: "disetujui", catatanAdmin: catatan };
+    });
 
-    const n1 = buatNotif({ judul: `${jenis === "pemesanan" ? "Pemesanan" : "Pengadaan"} Disetujui`, pesan: `Permintaan Anda (${nomor}) telah disetujui oleh ${approverNama}. ${catatan ? `Catatan: ${catatan}` : ""}`, tipe: "sukses", targetRole: "pemohon", nomorReferensi: nomor, jenisForm: jenis });
-    const n2 = buatNotif({ judul: "Permintaan Disetujui — Siap Diproses", pesan: `${namaPemohon} — ${perihal} (${nomor}) telah disetujui. Silakan proses pengadaan barang.`, tipe: "info", targetRole: "admin", nomorReferensi: nomor, jenisForm: jenis });
+    patchApi(`/api/${jenis}/${id}`, { status: "disetujui", catatanAdmin: catatan });
+
+    const label = jenis === "pemesanan" ? "Pemesanan" : "Pengadaan";
+    const n1 = buatNotif({ judul: `${label} Disetujui`, pesan: `Permintaan Anda (${nomor}) telah disetujui oleh ${approverNama}.${catatan ? ` Catatan: ${catatan}` : ""}`, tipe: "sukses", targetRole: "pemohon", nomorReferensi: nomor, jenisForm: jenis });
+    const n2 = buatNotif({ judul: `${label} Disetujui — Siap Diproses`, pesan: `${namaPemohon} — ${perihal} (${nomor}) telah disetujui.`, tipe: "info", targetRole: "admin", nomorReferensi: nomor, jenisForm: jenis });
     addNotif(n1, n2);
     saveNotif(n1); saveNotif(n2);
   };
 
-  const tolakItem = (id: string, jenis: "pemesanan" | "pengadaan", alasan: string, approverNama: string) => {
-    const now = new Date().toISOString();
+  const tolakItem = (id: string, jenis: Jenis, alasan: string, approverNama: string) => {
     let nomor = "";
 
-    if (jenis === "pemesanan") {
-      setPermintaanList((prev) => prev.map((p) => {
-        if (p.id !== id) return p;
-        nomor = p.nomorPesanan;
-        return { ...p, status: "ditolak", catatanAdmin: alasan, updatedAt: now };
-      }));
-      fetch(`/api/pemesanan/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "ditolak", catatanAdmin: alasan }) });
-    } else {
-      setPengadaanList((prev) => prev.map((p) => {
-        if (p.id !== id) return p;
-        nomor = p.nomorPengadaan;
-        return { ...p, status: "ditolak", catatanAdmin: alasan, updatedAt: now };
-      }));
-      fetch(`/api/pengadaan/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "ditolak", catatanAdmin: alasan }) });
-    }
+    updateStatus(jenis, id, (p) => {
+      nomor = jenis === "pemesanan" ? (p as FormPemesanan).nomorPesanan : (p as FormPengadaan).nomorPengadaan;
+      return { ...p, status: "ditolak", catatanAdmin: alasan };
+    });
 
-    const n = buatNotif({ judul: `${jenis === "pemesanan" ? "Pemesanan" : "Pengadaan"} Ditolak`, pesan: `Permintaan Anda (${nomor}) ditolak oleh ${approverNama}. Alasan: ${alasan}`, tipe: "ditolak", targetRole: "pemohon", nomorReferensi: nomor, jenisForm: jenis });
+    patchApi(`/api/${jenis}/${id}`, { status: "ditolak", catatanAdmin: alasan });
+
+    const label = jenis === "pemesanan" ? "Pemesanan" : "Pengadaan";
+    const n = buatNotif({ judul: `${label} Ditolak`, pesan: `Permintaan Anda (${nomor}) ditolak oleh ${approverNama}. Alasan: ${alasan}`, tipe: "ditolak", targetRole: "pemohon", nomorReferensi: nomor, jenisForm: jenis });
     addNotif(n); saveNotif(n);
   };
 
-  const prosesItem = (id: string, jenis: "pemesanan" | "pengadaan") => {
-    const now = new Date().toISOString();
-    if (jenis === "pemesanan") {
-      setPermintaanList((prev) => prev.map((p) => p.id === id ? { ...p, status: "diproses", updatedAt: now } : p));
-      fetch(`/api/pemesanan/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "diproses" }) });
-    } else {
-      setPengadaanList((prev) => prev.map((p) => p.id === id ? { ...p, status: "diproses", updatedAt: now } : p));
-      fetch(`/api/pengadaan/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "diproses" }) });
-    }
+  const prosesItem = (id: string, jenis: Jenis) => {
+    updateStatus(jenis, id, (p) => ({ ...p, status: "diproses" }));
+    patchApi(`/api/${jenis}/${id}`, { status: "diproses" });
   };
 
-  const selesaikanItem = (id: string, jenis: "pemesanan" | "pengadaan") => {
-    const now = new Date().toISOString();
+  const selesaikanItem = (id: string, jenis: Jenis) => {
     let nomor = "";
 
-    if (jenis === "pemesanan") {
-      setPermintaanList((prev) => prev.map((p) => {
-        if (p.id !== id) return p;
-        nomor = p.nomorPesanan;
-        return { ...p, status: "selesai", updatedAt: now };
-      }));
-      fetch(`/api/pemesanan/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "selesai" }) });
-    } else {
-      setPengadaanList((prev) => prev.map((p) => {
-        if (p.id !== id) return p;
-        nomor = p.nomorPengadaan;
-        return { ...p, status: "selesai", updatedAt: now };
-      }));
-      fetch(`/api/pengadaan/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "selesai" }) });
-    }
+    updateStatus(jenis, id, (p) => {
+      nomor = jenis === "pemesanan" ? (p as FormPemesanan).nomorPesanan : (p as FormPengadaan).nomorPengadaan;
+      return { ...p, status: "selesai" };
+    });
 
-    const n = buatNotif({ judul: `${jenis === "pemesanan" ? "Pemesanan" : "Pengadaan"} Selesai`, pesan: `Permintaan (${nomor}) telah selesai diproses. Barang siap diserahkan.`, tipe: "sukses", targetRole: "pemohon", nomorReferensi: nomor, jenisForm: jenis });
+    patchApi(`/api/${jenis}/${id}`, { status: "selesai" });
+
+    const label = jenis === "pemesanan" ? "Pemesanan" : "Pengadaan";
+    const n = buatNotif({ judul: `${label} Selesai`, pesan: `Permintaan (${nomor}) telah selesai diproses. Barang siap diserahkan.`, tipe: "sukses", targetRole: "pemohon", nomorReferensi: nomor, jenisForm: jenis });
     addNotif(n); saveNotif(n);
   };
+
+  // ─── Notifikasi ──────────────────────────────────────────────────────────
 
   const tandaiBacaNotif = (id: string) => {
     setNotifikasiList((prev) => prev.map((n) => n.id === id ? { ...n, sudahDibaca: true } : n));
-    fetch(`/api/notifikasi/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sudahDibaca: true }) });
+    patchApi(`/api/notifikasi/${id}`, { sudahDibaca: true });
   };
 
   const tandaiSemuaBaca = () => {
-    setNotifikasiList((prev) => prev.map((n) => ({ ...n, sudahDibaca: true })));
-    notifikasiList.filter((n) => !n.sudahDibaca).forEach((n) => {
-      fetch(`/api/notifikasi/${n.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sudahDibaca: true }) });
+    setNotifikasiList((prev) => {
+      prev.filter((n) => !n.sudahDibaca).forEach((n) => patchApi(`/api/notifikasi/${n.id}`, { sudahDibaca: true }));
+      return prev.map((n) => ({ ...n, sudahDibaca: true }));
     });
   };
 
   const hapusNotif = (id: string) => {
     setNotifikasiList((prev) => prev.filter((n) => n.id !== id));
-    fetch(`/api/notifikasi/${id}`, { method: "DELETE" });
+    authFetch(`/api/notifikasi/${id}`, { method: "DELETE" });
   };
+
+  // ─── Katalog ─────────────────────────────────────────────────────────────
 
   const updateKatalogStok = (id: string, stokBaru: number) => {
     setKatalogList((prev) => prev.map((k) => k.id === id ? { ...k, stok: stokBaru } : k));
-    fetch(`/api/katalog/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stok: stokBaru }) });
+    patchApi(`/api/katalog/${id}`, { stok: stokBaru });
+  };
+
+  const updateKatalogItem = (id: string, data: Partial<KatalogBarang>) => {
+    setKatalogList((prev) => prev.map((k) => k.id === id ? { ...k, ...data } : k));
+    patchApi(`/api/katalog/${id}`, data);
   };
 
   return (
@@ -245,7 +234,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       submitPermintaan, submitPengadaan,
       setujuiItem, tolakItem, prosesItem, selesaikanItem,
       tandaiBacaNotif, tandaiSemuaBaca, hapusNotif,
-      updateKatalogStok,
+      updateKatalogStok, updateKatalogItem,
     }}>
       {children}
     </AppStateContext.Provider>

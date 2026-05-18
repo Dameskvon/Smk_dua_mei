@@ -5,7 +5,7 @@ import { useAppState } from "@/lib/appState";
 import { formatRupiah } from "@/lib/data";
 import { KatalogBarang } from "@/types";
 import Link from "next/link";
-import { ItemIcon } from "@/components/Icons";
+import ItemImage from "@/components/ItemImage";
 import { Package, AlertTriangle, XCircle, X } from "lucide-react";
 
 export default function KatalogPage() {
@@ -127,7 +127,7 @@ export default function KatalogPage() {
                       }`}
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <div className="text-blue-500"><ItemIcon name={barang.gambarEmoji} size={28} /></div>
+                      <ItemImage namaBarang={barang.namaBarang} kategori={barang.kategori} gambarUrl={barang.gambarUrl} gambarEmoji={barang.gambarEmoji} size={44} />
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${stok.color}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${stok.dot}`} />
                         {stok.label}
@@ -173,7 +173,9 @@ export default function KatalogPage() {
                 <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
               </div>
               <div className="text-center mb-4">
-                <div className="flex justify-center mb-2 text-blue-500"><ItemIcon name={selected.gambarEmoji} size={44} /></div>
+                <div className="flex justify-center mb-2">
+                  <ItemImage namaBarang={selected.namaBarang} kategori={selected.kategori} gambarUrl={selected.gambarUrl} gambarEmoji={selected.gambarEmoji} size={64} />
+                </div>
                 <h4 className="font-bold text-gray-800">{selected.namaBarang}</h4>
                 <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{selected.kategori}</span>
               </div>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { unitDepartemenList } from "@/lib/data";
 import { BarangItem } from "@/types";
-import { CheckCircle2, Plus, Trash2, ClipboardList, Package, MessageSquare, Send, ArrowRight, RotateCcw } from "lucide-react";
+import { CheckCircle2, Plus, Trash2, ClipboardList, Package, MessageSquare, Send, ArrowRight, RotateCcw, X, ImageIcon } from "lucide-react";
 import ProtectedPage from "@/components/ProtectedPage";
 import { useAuth } from "@/lib/auth";
 import { useAppState } from "@/lib/appState";
@@ -47,6 +47,7 @@ export default function PemesananPage() {
     unitDepartemen: user?.unitDepartemen ?? "",
   });
   const [barangList, setBarangList] = useState<BarangItem[]>([{ ...initialBarang, id: "1" }]);
+  const [barangFoto, setBarangFoto] = useState<Record<string, { id: string; name: string; preview: string }[]>>({});
   const [submitted, setSubmitted] = useState(false);
   const [nomorPesanan, setNomorPesanan] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -62,6 +63,28 @@ export default function PemesananPage() {
 
   const addBarang = () => setBarangList([...barangList, { ...initialBarang, id: Date.now().toString() }]);
   const removeBarang = (id: string) => { if (barangList.length > 1) setBarangList(barangList.filter((b) => b.id !== id)); };
+
+  const handleFotoChange = (barangId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    files.forEach((file) => {
+      if (!file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setBarangFoto((prev) => ({
+          ...prev,
+          [barangId]: [
+            ...(prev[barangId] ?? []),
+            { id: Date.now().toString() + Math.random(), name: file.name, preview: ev.target?.result as string },
+          ],
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+  const removeFoto = (barangId: string, fotoId: string) => {
+    setBarangFoto((prev) => ({ ...prev, [barangId]: (prev[barangId] ?? []).filter((f) => f.id !== fotoId) }));
+  };
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -93,6 +116,7 @@ export default function PemesananPage() {
   const handleReset = () => {
     setForm({ ...initialForm, namaPemesan: user?.nama ?? "", jabatan: user?.jabatan ?? "", unitDepartemen: user?.unitDepartemen ?? "" });
     setBarangList([{ ...initialBarang, id: "1" }]);
+    setBarangFoto({});
     setSubmitted(false);
     setNomorPesanan("");
     setErrors({});
@@ -318,6 +342,31 @@ export default function PemesananPage() {
                         onChange={(e) => handleBarangChange(barang.id, "keterangan", e.target.value)}
                         placeholder="Spesifikasi, merek, warna, dll."
                         className={`${inputBase} border-gray-200`} />
+                    </div>
+                    <div className="md:col-span-4">
+                      <label className="block text-xs font-semibold text-gray-600 mb-2">Foto Barang (opsional)</label>
+                      {(barangFoto[barang.id] ?? []).length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {(barangFoto[barang.id] ?? []).map((f) => (
+                            <div key={f.id} className="relative group w-16 h-16 rounded-lg overflow-hidden border border-gray-200 shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={f.preview} alt={f.name} className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => removeFoto(barang.id, f.id)}
+                                className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center"
+                              >
+                                <X size={14} className="text-white opacity-0 group-hover:opacity-100 transition" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/40 transition cursor-pointer w-fit">
+                        <ImageIcon size={14} className="text-gray-400" />
+                        <span className="text-xs text-gray-500 font-medium">Tambah foto</span>
+                        <input type="file" accept="image/*" multiple className="sr-only" onChange={(e) => handleFotoChange(barang.id, e)} />
+                      </label>
                     </div>
                   </div>
                 </div>

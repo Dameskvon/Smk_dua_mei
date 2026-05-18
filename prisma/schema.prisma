@@ -122,7 +122,8 @@ model KatalogBarang {
   hargaSatuan Int    @map("harga_satuan")
   deskripsi   String @db.Text
   minStok     Int    @map("min_stok")
-  gambarEmoji String @map("gambar_emoji")
+  gambarEmoji String  @map("gambar_emoji")
+  gambarUrl   String? @map("gambar_url")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

@@ -23,7 +23,7 @@ export default function ProtectedPage({ children, allowedRoles }: Props) {
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-[#003580] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -46,7 +46,7 @@ export default function ProtectedPage({ children, allowedRoles }: Props) {
           </p>
           <button
             onClick={() => router.back()}
-            className="bg-[#003580] text-white text-sm font-semibold px-6 py-2 rounded-lg hover:bg-blue-900 transition"
+            className="bg-blue-600 text-white text-sm font-semibold px-6 py-2 rounded-lg hover:bg-blue-700 transition"
           >
             Kembali
           </button>

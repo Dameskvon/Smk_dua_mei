@@ -77,6 +77,7 @@ export interface KatalogBarang {
   deskripsi: string;
   minStok: number;
   gambarEmoji: string;
+  gambarUrl?: string;
 }
 
 export interface Notifikasi {

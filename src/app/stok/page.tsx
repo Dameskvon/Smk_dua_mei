@@ -5,7 +5,7 @@ import { useAppState } from "@/lib/appState";
 import { formatRupiah } from "@/lib/data";
 import { KatalogBarang } from "@/types";
 import Link from "next/link";
-import { ItemIcon } from "@/components/Icons";
+import ItemImage from "@/components/ItemImage";
 import {
   Package, CheckCircle2, AlertTriangle, XCircle, RefreshCw, Coins,
   ClipboardList, BarChart3, Siren,
@@ -16,7 +16,7 @@ type FilterStok = "semua" | "tersedia" | "menipis" | "habis";
 type SortBy = "nama" | "stok_asc" | "stok_desc" | "harga_asc" | "harga_desc";
 
 export default function StokPage() {
-  const { katalogList, updateKatalogStok } = useAppState();
+  const { katalogList, updateKatalogStok, updateKatalogItem } = useAppState();
   const [search, setSearch] = useState("");
   const [filterStok, setFilterStok] = useState<FilterStok>("semua");
   const [sortBy, setSortBy] = useState<SortBy>("nama");
@@ -27,6 +27,7 @@ export default function StokPage() {
   useEffect(() => { setStokData([...katalogList]); }, [katalogList]);
   const [adjustAmount, setAdjustAmount] = useState<number>(0);
   const [adjustType, setAdjustType] = useState<"masuk" | "keluar">("masuk");
+  const [gambarUrlInput, setGambarUrlInput] = useState("");
   const [riwayatStok, setRiwayatStok] = useState<
     { id: string; namaBarang: string; tipe: "masuk" | "keluar"; jumlah: number; stokSebelum: number; stokSesudah: number; tanggal: string }[]
   >([
@@ -236,7 +237,7 @@ export default function StokPage() {
                       <tr key={barang.id} className="hover:bg-gray-50 transition">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-blue-500"><ItemIcon name={barang.gambarEmoji} size={20} /></span>
+                            <ItemImage namaBarang={barang.namaBarang} kategori={barang.kategori} gambarUrl={barang.gambarUrl} gambarEmoji={barang.gambarEmoji} size={36} />
                             <div>
                               <p className="font-medium text-gray-800 text-sm">{barang.namaBarang}</p>
                               <p className="text-xs text-gray-400">{barang.kategori}</p>
@@ -259,7 +260,7 @@ export default function StokPage() {
                         </td>
                         <td className="px-4 py-3 text-center">
                           {isEditing ? (
-                            <div className="flex flex-col gap-1.5 items-center min-w-[160px]">
+                            <div className="flex flex-col gap-1.5 items-center min-w-[180px]">
                               <div className="flex gap-1">
                                 <button
                                   onClick={() => setAdjustType("masuk")}
@@ -284,11 +285,23 @@ export default function StokPage() {
                                 value={adjustAmount || ""}
                                 onChange={(e) => setAdjustAmount(parseInt(e.target.value) || 0)}
                                 placeholder="Jumlah"
-                                className="w-20 border border-gray-300 rounded px-2 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                className="w-24 border border-gray-300 rounded px-2 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
+                              />
+                              <input
+                                type="url"
+                                value={gambarUrlInput}
+                                onChange={(e) => setGambarUrlInput(e.target.value)}
+                                placeholder="URL gambar (opsional)"
+                                className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
                               />
                               <div className="flex gap-1">
                                 <button
-                                  onClick={() => handleAdjustStok(barang)}
+                                  onClick={() => {
+                                    handleAdjustStok(barang);
+                                    if (gambarUrlInput !== (barang.gambarUrl ?? "")) {
+                                      updateKatalogItem(barang.id, { gambarUrl: gambarUrlInput || undefined });
+                                    }
+                                  }}
                                   className="text-xs bg-[#003580] text-white px-2 py-1 rounded font-medium hover:bg-blue-900 transition"
                                 >
                                   Simpan
@@ -303,7 +316,7 @@ export default function StokPage() {
                             </div>
                           ) : (
                             <button
-                              onClick={() => { setEditingId(barang.id); setAdjustAmount(0); setAdjustType("masuk"); }}
+                              onClick={() => { setEditingId(barang.id); setAdjustAmount(0); setAdjustType("masuk"); setGambarUrlInput(barang.gambarUrl ?? ""); }}
                               className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline"
                             >
                               Atur Stok
@@ -347,7 +360,7 @@ export default function StokPage() {
                 stokData.filter((b) => b.stok <= b.minStok).map((b) => (
                   <div key={b.id} className="px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-blue-500"><ItemIcon name={b.gambarEmoji} size={18} /></span>
+                      <ItemImage namaBarang={b.namaBarang} kategori={b.kategori} gambarUrl={b.gambarUrl} gambarEmoji={b.gambarEmoji} size={32} />
                       <div>
                         <p className="text-xs font-medium text-gray-800">{b.namaBarang}</p>
                         <p className="text-xs text-gray-400">

@@ -2,15 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, roleLabel, roleColor } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import { Eye, EyeOff, LogIn, GraduationCap, ShieldCheck, User, Lock } from "lucide-react";
-
-const demoAccounts = [
-  { username: "guru1",   password: "guru123",   role: "guru"           as const, nama: "Budi Santoso, S.Pd." },
-  { username: "kepsek",  password: "kepsek123", role: "kepala_sekolah" as const, nama: "Drs. H. Ahmad Fauzi" },
-  { username: "admin",   password: "admin123",  role: "admin"          as const, nama: "Dewi Lestari, S.E." },
-  { username: "adminit", password: "adminit123",role: "admin_it"       as const, nama: "Reza Firmansyah, S.Kom." },
-];
 
 export default function LoginPage() {
   const { login, user } = useAuth();
@@ -33,12 +26,6 @@ export default function LoginPage() {
     if (ok) { router.replace("/"); }
     else { setError("Username atau password salah. Periksa kembali kredensial Anda."); }
     setLoading(false);
-  };
-
-  const fillDemo = (acc: (typeof demoAccounts)[0]) => {
-    setUsername(acc.username);
-    setPassword(acc.password);
-    setError("");
   };
 
   return (
@@ -82,7 +69,6 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Username */}
             <div>
               <label className="block text-sm font-semibold text-blue-200 mb-1.5">Username</label>
               <div className="relative">
@@ -101,7 +87,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-sm font-semibold text-blue-200 mb-1.5">Password</label>
               <div className="relative">
@@ -127,7 +112,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Error */}
             {error && (
               <div className="bg-red-500/20 border border-red-400/40 text-red-200 text-sm rounded-xl px-4 py-3 flex items-start gap-2 animate-slide-down">
                 <span className="mt-0.5 shrink-0">⚠️</span>
@@ -135,7 +119,6 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -150,30 +133,6 @@ export default function LoginPage() {
               {loading ? "Memproses..." : "Masuk ke Sistem"}
             </button>
           </form>
-        </div>
-
-        {/* Demo accounts */}
-        <div className="mt-5 animate-slide-up delay-150">
-          <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest text-center mb-3">
-            ⚡ Akun Demo — Klik untuk mengisi otomatis
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {demoAccounts.map((acc) => (
-              <button
-                key={acc.username}
-                onClick={() => fillDemo(acc)}
-                className="text-left bg-white/8 hover:bg-white/15 border border-white/10 hover:border-white/25 rounded-2xl px-3.5 py-3 transition group"
-              >
-                <p className="text-white text-xs font-bold truncate group-hover:text-[#FFD700] transition">{acc.nama}</p>
-                <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded-full font-bold mt-1 ${roleColor[acc.role]}`}>
-                  {roleLabel[acc.role]}
-                </span>
-                <p className="text-blue-400 text-[10px] mt-1 font-mono opacity-80 group-hover:opacity-100 transition">
-                  {acc.username} / {acc.password}
-                </p>
-              </button>
-            ))}
-          </div>
         </div>
 
         <p className="text-center text-blue-500/60 text-xs mt-6">

@@ -153,7 +153,7 @@ async function main() {
     ],
   });
 
-  console.log("✅ Seed selesai!");
+  console.log("Seed selesai!");
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());

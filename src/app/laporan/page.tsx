@@ -1,23 +1,42 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAppState } from "@/lib/appState";
+import { useAuth } from "@/lib/auth";
 import { formatRupiah, formatTanggal, unitDepartemenList, kategoriBarangList } from "@/lib/data";
+import { exportLaporanExcel } from "@/lib/exportExcel";
 import StatusBadge from "@/components/StatusBadge";
 import Link from "next/link";
 import {
   ClipboardList, Tag, FileText, CheckCircle2, BarChart3, Coins, AlertTriangle,
   XCircle, PartyPopper, Download, Printer, Calendar, Building2, Package,
-  Hourglass, RefreshCw, Pencil, Circle, Archive,
+  Hourglass, RefreshCw, Pencil, Circle,
 } from "lucide-react";
 import ProtectedPage from "@/components/ProtectedPage";
 
 type TabType = "ringkasan" | "departemen" | "jenis" | "status" | "bulanan";
 
+interface Signatory { nama: string; jabatan: string; }
+
 export default function LaporanPage() {
   const { permintaanList, pengadaanList, katalogList } = useAppState();
+  const { user } = useAuth();
   const [tab, setTab] = useState<TabType>("ringkasan");
   const printRef = useRef<HTMLDivElement>(null);
+  const [kepalaSekolah, setKepalaSekolah] = useState<Signatory | null>(null);
+  const [adminUser, setAdminUser] = useState<Signatory | null>(null);
+
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("smk_token") : null;
+    if (!token) return;
+    fetch("/api/users/signatories", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.kepalaSekolah) setKepalaSekolah(data.kepalaSekolah);
+        if (data.adminUser)     setAdminUser(data.adminUser);
+      })
+      .catch(() => {});
+  }, []);
 
   const totalPemesanan = permintaanList.length;
   const totalPengadaan = pengadaanList.length;
@@ -71,127 +90,13 @@ export default function LaporanPage() {
   const stokHabis = katalogList.filter((b) => b.stok === 0).length;
   const nilaiInventaris = katalogList.reduce((s, b) => s + b.stok * b.hargaSatuan, 0);
 
-  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
-  const downloadCSV = (filename: string, headers: string[], rows: (string | number)[][][]) => {
-    const SEP = ";";
-    const escape = (v: string | number) => {
-      const s = String(v);
-      return s.includes(SEP) || s.includes('"') || s.includes("\n")
-        ? `"${s.replace(/"/g, '""')}"`
-        : s;
-    };
-    const bom = "\uFEFF";
-    const hint = `sep=${SEP}\r\n`;
-    const csv = [headers.map(escape).join(SEP), ...rows.map((r) => r.flat().map(escape).join(SEP))].join("\r\n");
-    const blob = new Blob([bom + hint + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${filename}_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setShowExportMenu(false);
-  };
-
-  const exportRingkasan = () => {
-    downloadCSV("ringkasan_laporan", ["Indikator", "Nilai"], [
-      [["Total Pemesanan", totalPemesanan]],
-      [["Total Pengadaan", totalPengadaan]],
-      [["Total Pengajuan", totalItems]],
-      [["Menunggu", statusCounts.menunggu]],
-      [["Diproses", statusCounts.diproses]],
-      [["Disetujui", statusCounts.disetujui]],
-      [["Selesai", statusCounts.selesai]],
-      [["Ditolak", statusCounts.ditolak]],
-      [["Revisi", statusCounts.revisi]],
-      [["Total Estimasi Anggaran (Rp)", totalAnggaran]],
-      [["Anggaran Disetujui (Rp)", anggaranDisetujui]],
-      [["Anggaran Menunggu (Rp)", anggaranMenunggu]],
-      [["Anggaran Ditolak (Rp)", anggaranDitolak]],
-      [["Nilai Inventaris (Rp)", nilaiInventaris]],
-      [["Stok Menipis", stokMenipis]],
-      [["Stok Habis", stokHabis]],
-    ]);
-  };
-
-  const exportDepartemen = () => {
-    downloadCSV(
-      "laporan_per_departemen",
-      ["Unit / Departemen", "Pemesanan", "Pengadaan", "Total Pengajuan", "Total Anggaran (Rp)", "% Anggaran"],
-      laporan.perDepartemen.sort((a, b) => b.totalAnggaran - a.totalAnggaran).map((d) => [[
-        d.unit, d.pemesanan, d.pengadaan, d.pemesanan + d.pengadaan, d.totalAnggaran,
-        totalAnggaran > 0 ? Math.round((d.totalAnggaran / totalAnggaran) * 100) + "%" : "0%",
-      ]])
-    );
-  };
-
-  const exportJenis = () => {
-    downloadCSV(
-      "laporan_per_jenis_barang",
-      ["Jenis / Kategori Barang", "Jumlah Pengadaan", "Total Anggaran (Rp)", "% Anggaran"],
-      laporan.perJenis.sort((a, b) => b.totalAnggaran - a.totalAnggaran).map((d) => [[
-        d.jenis, d.jumlah, d.totalAnggaran,
-        totalAnggaran > 0 ? Math.round((d.totalAnggaran / totalAnggaran) * 100) + "%" : "0%",
-      ]])
-    );
-  };
-
-  const exportPemesanan = () => {
-    downloadCSV(
-      "data_pemesanan",
-      ["Nomor Pesanan", "Tanggal", "Nama Pemesan", "Unit / Departemen", "Keperluan", "Prioritas", "Status", "Catatan Admin"],
-      permintaanList.map((p) => [[
-        p.nomorPesanan,
-        formatTanggal(p.tanggalPesan),
-        p.namaPemesan,
-        p.unitDepartemen,
-        p.keperluan,
-        p.prioritas,
-        p.status,
-        p.catatanAdmin ?? "",
-      ]])
-    );
-  };
-
-  const exportPengadaan = () => {
-    downloadCSV(
-      "data_pengadaan",
-      ["Nomor Pengadaan", "Tanggal", "Nama Pengaju", "Unit / Departemen", "Jenis Barang", "Spesifikasi", "Jumlah", "Satuan", "Estimasi Harga (Rp)", "Sumber Dana", "Tujuan", "Prioritas", "Status", "Catatan Admin"],
-      pengadaanList.map((p) => [[
-        p.nomorPengadaan,
-        formatTanggal(p.tanggalPengadaan),
-        p.namaPengaju,
-        p.unitDepartemen,
-        p.jenisBarang,
-        p.spesifikasi,
-        p.jumlah,
-        p.satuan,
-        p.estimasiHarga,
-        p.sumberDana,
-        p.tujuanPengadaan,
-        p.prioritas,
-        p.status,
-        p.catatanAdmin ?? "",
-      ]])
-    );
-  };
-
-  const exportInventaris = () => {
-    downloadCSV(
-      "inventaris_stok",
-      ["Nama Barang", "Kategori", "Stok", "Min Stok", "Satuan", "Harga Satuan (Rp)", "Nilai Total (Rp)", "Kondisi Stok"],
-      katalogList.map((b) => [[
-        b.namaBarang,
-        b.kategori,
-        b.stok,
-        b.minStok,
-        b.satuan,
-        b.hargaSatuan,
-        b.stok * b.hargaSatuan,
-        b.stok === 0 ? "Habis" : b.stok <= b.minStok ? "Menipis" : "Normal",
-      ]])
-    );
+  const handleExportExcel = async () => {
+    setExporting(true);
+    await new Promise((r) => setTimeout(r, 100));
+    exportLaporanExcel(permintaanList, pengadaanList, katalogList);
+    setExporting(false);
   };
 
   const handlePrint = () => { window.print(); };
@@ -220,45 +125,14 @@ export default function LaporanPage() {
               <p className="text-gray-500 text-sm mt-1">Ringkasan lengkap data pemesanan, pengadaan, dan stok barang SMK Dua Mei.</p>
             </div>
             <div className="flex items-center gap-2 print:hidden shrink-0">
-              {/* Export Excel Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowExportMenu((v) => !v)}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-green-600 text-white text-sm font-bold shadow hover:bg-green-700 transition"
-                >
-                  <Download size={15} /> Export Excel
-                </button>
-                {showExportMenu && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />
-                    <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
-                      <div className="px-4 py-2 bg-green-50 border-b border-green-100">
-                        <p className="text-[10px] font-bold text-green-700 uppercase tracking-widest">Pilih Data</p>
-                      </div>
-                      {[
-                        { label: "Ringkasan Statistik", fn: exportRingkasan, color: "bg-blue-50 text-blue-600", icon: <BarChart3 size={15} /> },
-                        { label: "Per Departemen", fn: exportDepartemen, color: "bg-indigo-50 text-indigo-600", icon: <Building2 size={15} /> },
-                        { label: "Per Jenis Barang", fn: exportJenis, color: "bg-purple-50 text-purple-600", icon: <Package size={15} /> },
-                        { label: "Data Pemesanan", fn: exportPemesanan, color: "bg-cyan-50 text-cyan-600", icon: <ClipboardList size={15} /> },
-                        { label: "Data Pengadaan", fn: exportPengadaan, color: "bg-yellow-50 text-yellow-600", icon: <Tag size={15} /> },
-                        { label: "Inventaris & Stok", fn: exportInventaris, color: "bg-green-50 text-green-600", icon: <Archive size={15} /> },
-                      ].map((opt) => (
-                        <button
-                          key={opt.label}
-                          onClick={opt.fn}
-                          className="w-full text-left px-4 py-2.5 hover:bg-gray-50 transition flex items-center gap-3 border-b border-gray-50 last:border-0 group"
-                        >
-                          <span className={`w-7 h-7 rounded-lg ${opt.color} flex items-center justify-center shrink-0`}>
-                            {opt.icon}
-                          </span>
-                          <span className="text-sm text-gray-700 font-medium group-hover:text-green-700 transition">{opt.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-              {/* Cetak */}
+              <button
+                onClick={handleExportExcel}
+                disabled={exporting}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-green-600 text-white text-sm font-bold shadow hover:bg-green-700 transition disabled:opacity-60"
+              >
+                <Download size={15} />
+                {exporting ? "Mengekspor..." : "Export Excel (.xlsx)"}
+              </button>
               <button
                 onClick={handlePrint}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#003580] text-white text-sm font-bold shadow hover:bg-blue-900 transition"
@@ -718,22 +592,21 @@ export default function LaporanPage() {
         </div>{/* end screen-only */}
 
         {/* ── PRINT-ONLY LAYOUT ── */}
-        <div id="laporan-print" className="print-only" style={{ fontFamily: "'Times New Roman', serif", color: "#000" }}>
+        <div id="laporan-print" className="print-only">
 
           {/* Kop Surat */}
-          <div style={{ borderBottom: "3px solid #003580", paddingBottom: "10px", marginBottom: "14px" }}>
-            <table style={{ width: "100%", border: "none" }}>
+          <div style={{ borderBottom: "3px solid #003580", paddingBottom: 10, marginBottom: 14, fontFamily: "'Times New Roman', Georgia, serif" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <tbody>
                 <tr>
-                  <td style={{ width: "80px", border: "none", verticalAlign: "middle", padding: "0" }}>
-                    <div style={{ width: "70px", height: "70px", border: "2px solid #003580", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", background: "#003580", color: "white", fontWeight: "900", fontSize: "18px", textAlign: "center", lineHeight: "1.1" }}>
-                      SMK<br />DM
-                    </div>
+                  <td style={{ width: 90, verticalAlign: "middle", padding: 0, border: "none" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/logo-smk.svg" alt="Logo SMK Dua Mei" style={{ width: 75, height: 75 }} />
                   </td>
-                  <td style={{ border: "none", verticalAlign: "middle", paddingLeft: "14px" }}>
-                    <div style={{ fontSize: "18pt", fontWeight: "900", color: "#003580", letterSpacing: "0.5px" }}>SMK DUA MEI</div>
-                    <div style={{ fontSize: "10pt", fontWeight: "600", color: "#333", marginTop: "2px" }}>Yayasan Pendidikan Dua Mei</div>
-                    <div style={{ fontSize: "8.5pt", color: "#555", marginTop: "1px" }}>Jl. Raya Dua Mei No. 1, Ciputat Timur, Tangerang Selatan 15412</div>
+                  <td style={{ verticalAlign: "middle", paddingLeft: 12, border: "none" }}>
+                    <div style={{ fontSize: "18pt", fontWeight: 900, color: "#003580", letterSpacing: "0.5px" }}>SMK DUA MEI</div>
+                    <div style={{ fontSize: "10pt", fontWeight: 700, color: "#222", marginTop: 2 }}>Yayasan Pendidikan Dua Mei</div>
+                    <div style={{ fontSize: "8.5pt", color: "#555", marginTop: 1 }}>Jl. Raya Dua Mei No. 1, Ciputat Timur, Tangerang Selatan 15412</div>
                     <div style={{ fontSize: "8.5pt", color: "#555" }}>Telp: (021) 7490-xxxx &nbsp;|&nbsp; Email: smkduamei@edu.id &nbsp;|&nbsp; NPSN: xxxxxxxx</div>
                   </td>
                 </tr>
@@ -741,194 +614,338 @@ export default function LaporanPage() {
             </table>
           </div>
 
-          {/* Judul Laporan */}
-          <div style={{ textAlign: "center", marginBottom: "16px" }}>
-            <div style={{ fontSize: "13pt", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px" }}>
+          {/* Judul */}
+          <div style={{ textAlign: "center", marginBottom: 16, fontFamily: "'Times New Roman', Georgia, serif" }}>
+            <div style={{ fontSize: "13pt", fontWeight: 900, textTransform: "uppercase", letterSpacing: "1.5px" }}>
               Laporan Rekap Pemesanan &amp; Pengadaan Barang
             </div>
-            <div style={{ fontSize: "10pt", color: "#444", marginTop: "3px" }}>
-              Sistem Pengadaan Internal — SMK Dua Mei
-            </div>
-            <div style={{ fontSize: "9pt", color: "#666", marginTop: "2px" }}>
+            <div style={{ fontSize: "10pt", color: "#444", marginTop: 3 }}>Sistem Pengadaan Internal — SMK Dua Mei</div>
+            <div style={{ fontSize: "9pt", color: "#666", marginTop: 2 }}>
               Tanggal Cetak: {new Date().toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
             </div>
           </div>
 
-          {/* A. Ringkasan Statistik */}
-          <div style={{ marginBottom: "16px" }} className="print-section">
-            <div style={{ fontWeight: "700", fontSize: "10pt", background: "#003580", color: "white", padding: "4px 10px", marginBottom: "6px" }} className="print-section-header">
-              A. RINGKASAN STATISTIK
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ width: "5%" }}>No</th>
-                  <th style={{ textAlign: "left" }}>Indikator</th>
-                  <th style={{ width: "20%", textAlign: "center" }}>Nilai</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  ["Total Pemesanan Barang", totalPemesanan],
-                  ["Total Pengajuan Pengadaan", totalPengadaan],
-                  ["Total Seluruh Pengajuan", totalItems],
-                  ["Menunggu Persetujuan", statusCounts.menunggu],
-                  ["Sedang Diproses", statusCounts.diproses],
-                  ["Disetujui", statusCounts.disetujui],
-                  ["Selesai", statusCounts.selesai],
-                  ["Ditolak", statusCounts.ditolak],
-                  ["Total Estimasi Anggaran", formatRupiah(totalAnggaran)],
-                  ["Anggaran Disetujui", formatRupiah(anggaranDisetujui)],
-                  ["Anggaran Ditolak", formatRupiah(anggaranDitolak)],
-                  ["Nilai Inventaris Stok", formatRupiah(nilaiInventaris)],
-                ].map(([label, val], i) => (
-                  <tr key={String(label)}>
-                    <td style={{ textAlign: "center" }}>{i + 1}</td>
-                    <td>{label}</td>
-                    <td style={{ textAlign: "center", fontWeight: "600" }}>{val}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {/* ── helper styles shared across all sections ── */}
+          {(() => {
+            const PH = { background: "#003580", color: "#fff", padding: "5px 10px", fontSize: "10pt", fontWeight: 700, letterSpacing: "0.5px", marginBottom: 0 } as React.CSSProperties;
+            const TBL = { width: "100%", borderCollapse: "collapse" as const, marginBottom: 18, tableLayout: "auto" as const, fontFamily: "'Times New Roman', Georgia, serif", fontSize: "8.5pt" };
+            const TH  = (align: "left"|"center"|"right" = "left"): React.CSSProperties => ({ background: "#003580", color: "#fff", padding: "6px 8px", fontWeight: 700, border: "1px solid #444", textAlign: align, whiteSpace: "nowrap" });
+            const TD  = (row: number, align: "left"|"center"|"right" = "left"): React.CSSProperties => ({ background: row % 2 === 0 ? "#F0F4FA" : "#fff", padding: "4px 8px", border: "1px solid #ccc", textAlign: align, verticalAlign: "middle" });
+            const TF  = (align: "left"|"center"|"right" = "left"): React.CSSProperties => ({ background: "#E8EDF5", padding: "5px 8px", fontWeight: 700, color: "#003580", border: "1px solid #aaa", textAlign: align });
+            const anggaranMenunggu2 = pengadaanList.filter((p) => ["menunggu","diproses"].includes(p.status)).reduce((s, p) => s + p.estimasiHarga, 0);
 
-          {/* B. Rekap Per Departemen */}
-          <div style={{ marginBottom: "16px" }} className="print-section">
-            <div style={{ fontWeight: "700", fontSize: "10pt", background: "#003580", color: "white", padding: "4px 10px", marginBottom: "6px" }} className="print-section-header">
-              B. REKAP PER UNIT / DEPARTEMEN
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ width: "5%" }}>No</th>
-                  <th style={{ textAlign: "left" }}>Unit / Departemen</th>
-                  <th style={{ width: "12%", textAlign: "center" }}>Pemesanan</th>
-                  <th style={{ width: "12%", textAlign: "center" }}>Pengadaan</th>
-                  <th style={{ width: "12%", textAlign: "center" }}>Total</th>
-                  <th style={{ width: "22%", textAlign: "right" }}>Total Anggaran</th>
-                </tr>
-              </thead>
-              <tbody>
-                {laporan.perDepartemen.sort((a, b) => b.totalAnggaran - a.totalAnggaran).map((d, i) => (
-                  <tr key={d.unit}>
-                    <td style={{ textAlign: "center" }}>{i + 1}</td>
-                    <td>{d.unit}</td>
-                    <td style={{ textAlign: "center" }}>{d.pemesanan}</td>
-                    <td style={{ textAlign: "center" }}>{d.pengadaan}</td>
-                    <td style={{ textAlign: "center", fontWeight: "600" }}>{d.pemesanan + d.pengadaan}</td>
-                    <td style={{ textAlign: "right" }}>{formatRupiah(d.totalAnggaran)}</td>
-                  </tr>
-                ))}
-                <tr style={{ fontWeight: "700", background: "#e8edf5" }}>
-                  <td colSpan={2} style={{ textAlign: "right" }}>TOTAL</td>
-                  <td style={{ textAlign: "center" }}>{laporan.perDepartemen.reduce((s, d) => s + d.pemesanan, 0)}</td>
-                  <td style={{ textAlign: "center" }}>{laporan.perDepartemen.reduce((s, d) => s + d.pengadaan, 0)}</td>
-                  <td style={{ textAlign: "center" }}>{laporan.perDepartemen.reduce((s, d) => s + d.pemesanan + d.pengadaan, 0)}</td>
-                  <td style={{ textAlign: "right" }}>{formatRupiah(totalAnggaran)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+            /* Per Departemen computed */
+            const deptMap: Record<string, { pem: number; pgd: number; anggaran: number }> = {};
+            permintaanList.forEach((p) => { if (!deptMap[p.unitDepartemen]) deptMap[p.unitDepartemen] = { pem: 0, pgd: 0, anggaran: 0 }; deptMap[p.unitDepartemen].pem++; });
+            pengadaanList.forEach((p) => { if (!deptMap[p.unitDepartemen]) deptMap[p.unitDepartemen] = { pem: 0, pgd: 0, anggaran: 0 }; deptMap[p.unitDepartemen].pgd++; deptMap[p.unitDepartemen].anggaran += p.estimasiHarga; });
+            const deptRows = Object.entries(deptMap).sort((a, b) => b[1].anggaran - a[1].anggaran);
+            const deptTot = deptRows.reduce((s, [, d]) => ({ pem: s.pem + d.pem, pgd: s.pgd + d.pgd, anggaran: s.anggaran + d.anggaran }), { pem: 0, pgd: 0, anggaran: 0 });
 
-          {/* C. Rekap Per Jenis Barang */}
-          <div style={{ marginBottom: "16px" }} className="print-section">
-            <div style={{ fontWeight: "700", fontSize: "10pt", background: "#003580", color: "white", padding: "4px 10px", marginBottom: "6px" }} className="print-section-header">
-              C. REKAP PER JENIS / KATEGORI BARANG
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ width: "5%" }}>No</th>
-                  <th style={{ textAlign: "left" }}>Jenis / Kategori Barang</th>
-                  <th style={{ width: "18%", textAlign: "center" }}>Jumlah Pengajuan</th>
-                  <th style={{ width: "25%", textAlign: "right" }}>Total Anggaran</th>
-                  <th style={{ width: "12%", textAlign: "center" }}>% Anggaran</th>
-                </tr>
-              </thead>
-              <tbody>
-                {laporan.perJenis.sort((a, b) => b.totalAnggaran - a.totalAnggaran).map((d, i) => (
-                  <tr key={d.jenis}>
-                    <td style={{ textAlign: "center" }}>{i + 1}</td>
-                    <td>{d.jenis}</td>
-                    <td style={{ textAlign: "center" }}>{d.jumlah}</td>
-                    <td style={{ textAlign: "right" }}>{formatRupiah(d.totalAnggaran)}</td>
-                    <td style={{ textAlign: "center" }}>{totalAnggaran > 0 ? Math.round((d.totalAnggaran / totalAnggaran) * 100) : 0}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            const sColor: Record<string, string> = { menunggu: "#D97706", diproses: "#2563EB", disetujui: "#16A34A", selesai: "#6B7280", ditolak: "#DC2626", revisi: "#EA580C" };
 
-          {/* D. Data Pengadaan Lengkap */}
-          <div style={{ marginBottom: "16px" }} className="print-section">
-            <div style={{ fontWeight: "700", fontSize: "10pt", background: "#003580", color: "white", padding: "4px 10px", marginBottom: "6px" }} className="print-section-header">
-              D. DAFTAR PENGAJUAN PENGADAAN BARANG
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ width: "5%" }}>No</th>
-                  <th style={{ width: "14%", textAlign: "left" }}>Nomor</th>
-                  <th style={{ textAlign: "left" }}>Jenis Barang</th>
-                  <th style={{ width: "16%", textAlign: "left" }}>Unit</th>
-                  <th style={{ width: "18%", textAlign: "right" }}>Estimasi Harga</th>
-                  <th style={{ width: "10%", textAlign: "center" }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pengadaanList.map((p, i) => (
-                  <tr key={p.id}>
-                    <td style={{ textAlign: "center" }}>{i + 1}</td>
-                    <td style={{ fontFamily: "monospace", fontSize: "8pt" }}>{p.nomorPengadaan}</td>
-                    <td>{p.jenisBarang}</td>
-                    <td style={{ fontSize: "8pt" }}>{p.unitDepartemen}</td>
-                    <td style={{ textAlign: "right" }}>{formatRupiah(p.estimasiHarga)}</td>
-                    <td style={{ textAlign: "center", textTransform: "capitalize" }}>{p.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            return (
+              <>
+                {/* A. RINGKASAN */}
+                <div style={{ marginBottom: 20 }}>
+                  <div style={PH}>A. RINGKASAN STATISTIK</div>
+                  <table style={TBL}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...TH("center"), width: "6%" }}>No</th>
+                        <th style={TH("left")}>Indikator</th>
+                        <th style={{ ...TH("center"), width: "28%" }}>Nilai</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {([
+                        ["Total Pemesanan Barang",            permintaanList.length],
+                        ["Total Pengajuan Pengadaan",          pengadaanList.length],
+                        ["Total Seluruh Pengajuan",            totalItems],
+                        null,
+                        ["Menunggu Persetujuan",               statusCounts.menunggu],
+                        ["Sedang Diproses",                    statusCounts.diproses],
+                        ["Disetujui",                          statusCounts.disetujui],
+                        ["Selesai",                            statusCounts.selesai],
+                        ["Ditolak",                            statusCounts.ditolak],
+                        ["Revisi",                             statusCounts.revisi],
+                        null,
+                        ["Total Estimasi Anggaran",            formatRupiah(totalAnggaran)],
+                        ["Anggaran Disetujui",                 formatRupiah(anggaranDisetujui)],
+                        ["Anggaran Menunggu / Diproses",       formatRupiah(anggaranMenunggu2)],
+                        ["Anggaran Ditolak",                   formatRupiah(anggaranDitolak)],
+                        null,
+                        ["Nilai Total Inventaris Stok",        formatRupiah(nilaiInventaris)],
+                        ["Jumlah Item Stok Menipis",           stokMenipis],
+                        ["Jumlah Item Stok Habis",             stokHabis],
+                      ] as ([string, string|number] | null)[]).map((row, i) =>
+                        row === null ? (
+                          <tr key={i}><td colSpan={3} style={{ border: "1px solid #ccc", padding: 3, background: "#f8f9fa" }}></td></tr>
+                        ) : (
+                          <tr key={i}>
+                            <td style={TD(i, "center")}>{i + 1}</td>
+                            <td style={TD(i, "left")}>{row[0]}</td>
+                            <td style={{ ...TD(i, "center"), fontWeight: 700 }}>{row[1]}</td>
+                          </tr>
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
-          {/* Tanda Tangan */}
-          <div style={{ marginTop: "32px" }} className="print-signature">
-            <table style={{ width: "100%", border: "none" }}>
-              <tbody>
-                <tr>
-                  <td style={{ border: "none", width: "33%", textAlign: "center", verticalAlign: "top", padding: "0 8px" }}>
-                    <div style={{ fontSize: "9pt" }}>Dibuat oleh,</div>
-                    <div style={{ marginTop: "55px", borderTop: "1px solid #000", paddingTop: "4px", fontSize: "9pt", fontWeight: "600" }}>
-                      Staff Tata Usaha
-                    </div>
-                    <div style={{ fontSize: "8pt", color: "#555" }}>NIP: —</div>
-                  </td>
-                  <td style={{ border: "none", width: "33%", textAlign: "center", verticalAlign: "top", padding: "0 8px" }}>
-                    <div style={{ fontSize: "9pt" }}>Mengetahui,</div>
-                    <div style={{ marginTop: "55px", borderTop: "1px solid #000", paddingTop: "4px", fontSize: "9pt", fontWeight: "600" }}>
-                      Wakil Kepala Sarana Prasarana
-                    </div>
-                    <div style={{ fontSize: "8pt", color: "#555" }}>NIP: —</div>
-                  </td>
-                  <td style={{ border: "none", width: "34%", textAlign: "center", verticalAlign: "top", padding: "0 8px" }}>
-                    <div style={{ fontSize: "9pt" }}>
-                      Ciputat, {new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}
-                    </div>
-                    <div style={{ fontSize: "9pt", marginTop: "2px" }}>Kepala Sekolah,</div>
-                    <div style={{ marginTop: "48px", borderTop: "1px solid #000", paddingTop: "4px", fontSize: "9pt", fontWeight: "600" }}>
-                      Drs. H. Ahmad Fauzi
-                    </div>
-                    <div style={{ fontSize: "8pt", color: "#555" }}>NIP: —</div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                {/* B. PER DEPARTEMEN */}
+                <div style={{ marginBottom: 20 }}>
+                  <div style={PH}>B. REKAP PER UNIT / DEPARTEMEN</div>
+                  <table style={TBL}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...TH("center"), width: "5%" }}>No</th>
+                        <th style={TH("left")}>Unit / Departemen</th>
+                        <th style={{ ...TH("center"), width: "13%" }}>Pemesanan</th>
+                        <th style={{ ...TH("center"), width: "13%" }}>Pengadaan</th>
+                        <th style={{ ...TH("center"), width: "13%" }}>Total</th>
+                        <th style={{ ...TH("right"), width: "22%" }}>Total Anggaran</th>
+                        <th style={{ ...TH("center"), width: "10%" }}>% Anggaran</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {deptRows.map(([unit, d], i) => (
+                        <tr key={unit}>
+                          <td style={TD(i, "center")}>{i + 1}</td>
+                          <td style={TD(i, "left")}>{unit}</td>
+                          <td style={TD(i, "center")}>{d.pem}</td>
+                          <td style={TD(i, "center")}>{d.pgd}</td>
+                          <td style={{ ...TD(i, "center"), fontWeight: 700 }}>{d.pem + d.pgd}</td>
+                          <td style={TD(i, "right")}>{formatRupiah(d.anggaran)}</td>
+                          <td style={TD(i, "center")}>{totalAnggaran > 0 ? Math.round((d.anggaran / totalAnggaran) * 100) : 0}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={2} style={TF("right")}>TOTAL</td>
+                        <td style={TF("center")}>{deptTot.pem}</td>
+                        <td style={TF("center")}>{deptTot.pgd}</td>
+                        <td style={TF("center")}>{deptTot.pem + deptTot.pgd}</td>
+                        <td style={TF("right")}>{formatRupiah(deptTot.anggaran)}</td>
+                        <td style={TF("center")}>100%</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
 
-          {/* Footer Cetak */}
-          <div style={{ marginTop: "24px", borderTop: "1px solid #ccc", paddingTop: "6px", textAlign: "center", fontSize: "7.5pt", color: "#888" }}>
-            Dokumen ini dicetak secara otomatis oleh Sistem Pengadaan Internal SMK Dua Mei •{" "}
-            {new Date().toLocaleString("id-ID")} • Dokumen ini sah tanpa tanda tangan basah jika dicetak dari sistem resmi.
-          </div>
+                {/* C. PER JENIS */}
+                <div style={{ marginBottom: 20 }}>
+                  <div style={PH}>C. REKAP PER JENIS / KATEGORI BARANG</div>
+                  <table style={TBL}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...TH("center"), width: "5%" }}>No</th>
+                        <th style={TH("left")}>Jenis / Kategori Barang</th>
+                        <th style={{ ...TH("center"), width: "18%" }}>Jumlah Pengajuan</th>
+                        <th style={{ ...TH("right"), width: "25%" }}>Total Anggaran</th>
+                        <th style={{ ...TH("center"), width: "12%" }}>% Anggaran</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {laporan.perJenis.sort((a, b) => b.totalAnggaran - a.totalAnggaran).map((d, i) => (
+                        <tr key={d.jenis}>
+                          <td style={TD(i, "center")}>{i + 1}</td>
+                          <td style={TD(i, "left")}>{d.jenis}</td>
+                          <td style={TD(i, "center")}>{d.jumlah}</td>
+                          <td style={TD(i, "right")}>{formatRupiah(d.totalAnggaran)}</td>
+                          <td style={TD(i, "center")}>{totalAnggaran > 0 ? Math.round((d.totalAnggaran / totalAnggaran) * 100) : 0}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={2} style={TF("right")}>TOTAL</td>
+                        <td style={TF("center")}>{laporan.perJenis.reduce((s, d) => s + d.jumlah, 0)}</td>
+                        <td style={TF("right")}>{formatRupiah(totalAnggaran)}</td>
+                        <td style={TF("center")}>100%</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* D. PENGADAAN */}
+                <div style={{ marginBottom: 20, breakBefore: "page" as const }}>
+                  <div style={PH}>D. DAFTAR PENGAJUAN PENGADAAN BARANG</div>
+                  <table style={TBL}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...TH("center"), width: "4%" }}>No</th>
+                        <th style={{ ...TH("left"), width: "14%" }}>Nomor Pengadaan</th>
+                        <th style={{ ...TH("left"), width: "12%" }}>Tanggal</th>
+                        <th style={TH("left")}>Nama Pengaju</th>
+                        <th style={TH("left")}>Unit / Departemen</th>
+                        <th style={TH("left")}>Jenis Barang</th>
+                        <th style={{ ...TH("center"), width: "5%" }}>Jml</th>
+                        <th style={{ ...TH("center"), width: "7%" }}>Satuan</th>
+                        <th style={{ ...TH("right"), width: "14%" }}>Estimasi Harga</th>
+                        <th style={{ ...TH("center"), width: "9%" }}>Prioritas</th>
+                        <th style={{ ...TH("center"), width: "9%" }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pengadaanList.map((p, i) => (
+                        <tr key={p.id}>
+                          <td style={TD(i, "center")}>{i + 1}</td>
+                          <td style={{ ...TD(i, "left"), fontFamily: "monospace", fontSize: "7.5pt", color: "#92400E" }}>{p.nomorPengadaan}</td>
+                          <td style={{ ...TD(i, "center"), fontSize: "7.5pt" }}>{formatTanggal(p.tanggalPengadaan)}</td>
+                          <td style={TD(i, "left")}>{p.namaPengaju}</td>
+                          <td style={{ ...TD(i, "left"), fontSize: "7.5pt" }}>{p.unitDepartemen}</td>
+                          <td style={TD(i, "left")}>{p.jenisBarang}</td>
+                          <td style={TD(i, "center")}>{p.jumlah}</td>
+                          <td style={TD(i, "center")}>{p.satuan}</td>
+                          <td style={TD(i, "right")}>{formatRupiah(p.estimasiHarga)}</td>
+                          <td style={{ ...TD(i, "center"), fontSize: "7.5pt", textTransform: "capitalize" }}>{p.prioritas}</td>
+                          <td style={{ ...TD(i, "center"), fontWeight: 700, color: sColor[p.status] ?? "#111", fontSize: "7.5pt", textTransform: "capitalize" }}>{p.status}</td>
+                        </tr>
+                      ))}
+                      {pengadaanList.length === 0 && (
+                        <tr><td colSpan={11} style={{ ...TD(0, "center"), fontStyle: "italic", color: "#888" }}>Tidak ada data pengadaan</td></tr>
+                      )}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={8} style={TF("right")}>TOTAL ANGGARAN</td>
+                        <td style={TF("right")}>{formatRupiah(totalAnggaran)}</td>
+                        <td colSpan={2} style={TF()}></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* E. PEMESANAN */}
+                <div style={{ marginBottom: 20 }}>
+                  <div style={PH}>E. DAFTAR PERMINTAAN PEMESANAN BARANG</div>
+                  <table style={TBL}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...TH("center"), width: "4%" }}>No</th>
+                        <th style={{ ...TH("left"), width: "15%" }}>Nomor Pesanan</th>
+                        <th style={{ ...TH("left"), width: "12%" }}>Tanggal</th>
+                        <th style={TH("left")}>Nama Pemesan</th>
+                        <th style={TH("left")}>Unit / Departemen</th>
+                        <th style={{ ...TH("left"), width: "18%" }}>Keperluan</th>
+                        <th style={{ ...TH("center"), width: "9%" }}>Prioritas</th>
+                        <th style={{ ...TH("center"), width: "9%" }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {permintaanList.map((p, i) => (
+                        <tr key={p.id}>
+                          <td style={TD(i, "center")}>{i + 1}</td>
+                          <td style={{ ...TD(i, "left"), fontFamily: "monospace", fontSize: "7.5pt", color: "#1D4ED8" }}>{p.nomorPesanan}</td>
+                          <td style={{ ...TD(i, "center"), fontSize: "7.5pt" }}>{formatTanggal(p.tanggalPesan)}</td>
+                          <td style={TD(i, "left")}>{p.namaPemesan}</td>
+                          <td style={{ ...TD(i, "left"), fontSize: "7.5pt" }}>{p.unitDepartemen}</td>
+                          <td style={{ ...TD(i, "left"), fontSize: "7.5pt" }}>{p.keperluan}</td>
+                          <td style={{ ...TD(i, "center"), fontSize: "7.5pt", textTransform: "capitalize" }}>{p.prioritas}</td>
+                          <td style={{ ...TD(i, "center"), fontWeight: 700, color: sColor[p.status] ?? "#111", fontSize: "7.5pt", textTransform: "capitalize" }}>{p.status}</td>
+                        </tr>
+                      ))}
+                      {permintaanList.length === 0 && (
+                        <tr><td colSpan={8} style={{ ...TD(0, "center"), fontStyle: "italic", color: "#888" }}>Tidak ada data pemesanan</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* F. INVENTARIS */}
+                <div style={{ marginBottom: 20, breakBefore: "page" as const }}>
+                  <div style={PH}>F. REKAP INVENTARIS &amp; STOK BARANG</div>
+                  <table style={TBL}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...TH("center"), width: "4%" }}>No</th>
+                        <th style={TH("left")}>Nama Barang</th>
+                        <th style={{ ...TH("left"), width: "16%" }}>Kategori</th>
+                        <th style={{ ...TH("center"), width: "7%" }}>Stok</th>
+                        <th style={{ ...TH("center"), width: "8%" }}>Min Stok</th>
+                        <th style={{ ...TH("center"), width: "7%" }}>Satuan</th>
+                        <th style={{ ...TH("right"), width: "15%" }}>Harga Satuan</th>
+                        <th style={{ ...TH("right"), width: "15%" }}>Nilai Total</th>
+                        <th style={{ ...TH("center"), width: "9%" }}>Kondisi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {katalogList.map((b, i) => {
+                        const kondisi = b.stok === 0 ? "Habis" : b.stok <= b.minStok ? "Menipis" : "Normal";
+                        const kColor  = kondisi === "Habis" ? "#DC2626" : kondisi === "Menipis" ? "#D97706" : "#16A34A";
+                        return (
+                          <tr key={b.id}>
+                            <td style={TD(i, "center")}>{i + 1}</td>
+                            <td style={TD(i, "left")}>{b.namaBarang}</td>
+                            <td style={{ ...TD(i, "left"), fontSize: "7.5pt" }}>{b.kategori}</td>
+                            <td style={{ ...TD(i, "center"), fontWeight: b.stok <= b.minStok ? 700 : 400, color: b.stok === 0 ? "#DC2626" : "#111" }}>{b.stok}</td>
+                            <td style={TD(i, "center")}>{b.minStok}</td>
+                            <td style={TD(i, "center")}>{b.satuan}</td>
+                            <td style={{ ...TD(i, "right"), fontSize: "7.5pt" }}>{formatRupiah(b.hargaSatuan)}</td>
+                            <td style={{ ...TD(i, "right"), fontSize: "7.5pt" }}>{formatRupiah(b.stok * b.hargaSatuan)}</td>
+                            <td style={{ ...TD(i, "center"), fontWeight: 700, color: kColor, fontSize: "8pt" }}>{kondisi}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={7} style={TF("right")}>TOTAL NILAI INVENTARIS</td>
+                        <td style={TF("right")}>{formatRupiah(nilaiInventaris)}</td>
+                        <td style={TF()}></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* Tanda Tangan */}
+                <div style={{ marginTop: 36, fontFamily: "'Times New Roman', Georgia, serif" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <tbody>
+                      <tr>
+                        {/* Dibuat oleh — user yang sedang login */}
+                        <td style={{ border: "none", width: "33%", textAlign: "center", verticalAlign: "top", padding: "0 10px" }}>
+                          <div style={{ fontSize: "9pt" }}>Dibuat oleh,</div>
+                          <div style={{ marginTop: 56, borderTop: "1px solid #000", paddingTop: 4, fontSize: "9pt", fontWeight: 700 }}>
+                            {user?.nama ?? "—"}
+                          </div>
+                          <div style={{ fontSize: "8pt", color: "#555" }}>{user?.jabatan ?? "—"}</div>
+                        </td>
+
+                        {/* Mengetahui — admin TU dari database */}
+                        <td style={{ border: "none", width: "33%", textAlign: "center", verticalAlign: "top", padding: "0 10px" }}>
+                          <div style={{ fontSize: "9pt" }}>Mengetahui,</div>
+                          <div style={{ marginTop: 56, borderTop: "1px solid #000", paddingTop: 4, fontSize: "9pt", fontWeight: 700 }}>
+                            {adminUser?.nama ?? "—"}
+                          </div>
+                          <div style={{ fontSize: "8pt", color: "#555" }}>{adminUser?.jabatan ?? "Admin Tata Usaha"}</div>
+                        </td>
+
+                        {/* Kepala Sekolah — dari database */}
+                        <td style={{ border: "none", width: "34%", textAlign: "center", verticalAlign: "top", padding: "0 10px" }}>
+                          <div style={{ fontSize: "9pt", marginBottom: 2 }}>
+                            Ciputat, {new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}
+                          </div>
+                          <div style={{ fontSize: "9pt" }}>Kepala Sekolah,</div>
+                          <div style={{ marginTop: 48, borderTop: "1px solid #000", paddingTop: 4, fontSize: "9pt", fontWeight: 700 }}>
+                            {kepalaSekolah?.nama ?? "—"}
+                          </div>
+                          <div style={{ fontSize: "8pt", color: "#555" }}>{kepalaSekolah?.jabatan ?? "Kepala Sekolah"}</div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Footer */}
+                <div style={{ marginTop: 24, borderTop: "1px solid #ccc", paddingTop: 6, textAlign: "center", fontSize: "7.5pt", color: "#888", fontFamily: "'Times New Roman', serif" }}>
+                  Dokumen ini dicetak secara otomatis oleh Sistem Pengadaan Internal SMK Dua Mei &bull;{" "}
+                  {new Date().toLocaleString("id-ID")} &bull; Dokumen sah tanpa tanda tangan basah jika dicetak dari sistem resmi.
+                </div>
+              </>
+            );
+          })()}
         </div>
       </main>
     </ProtectedPage>

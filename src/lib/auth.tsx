@@ -29,9 +29,9 @@ export const roleLabel: Record<UserRole, string> = {
 
 export const roleColor: Record<UserRole, string> = {
   guru: "bg-blue-100 text-blue-700",
-  kepala_sekolah: "bg-purple-100 text-purple-700",
-  admin: "bg-green-100 text-green-700",
-  admin_it: "bg-rose-100 text-rose-700",
+  kepala_sekolah: "bg-indigo-100 text-indigo-700",
+  admin: "bg-violet-100 text-violet-700",
+  admin_it: "bg-purple-100 text-purple-700",
 };
 
 export const roleNavLinks: Record<UserRole, { href: string; label: string }[]> = {
@@ -123,4 +123,18 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
+}
+
+// Helper: fetch dengan Authorization header otomatis dari localStorage
+export function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const saved = typeof window !== "undefined" ? localStorage.getItem("smk_user") : null;
+  const token = saved ? Buffer.from(saved).toString("base64") : "";
+  return fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers ?? {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
 }

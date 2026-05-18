@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Shield background -->
+  <path d="M100 8 L180 40 L180 110 Q180 160 100 192 Q20 160 20 110 L20 40 Z" fill="#003580"/>
+  <path d="M100 18 L170 46 L170 110 Q170 155 100 183 Q30 155 30 110 L30 46 Z" fill="#0047AB"/>
+
+  <!-- Gold border ring -->
+  <path d="M100 22 L166 49 L166 110 Q166 152 100 179 Q34 152 34 110 L34 49 Z" fill="none" stroke="#FFD700" stroke-width="2.5"/>
+
+  <!-- Book icon in center -->
+  <rect x="70" y="65" width="60" height="45" rx="4" fill="#FFD700"/>
+  <rect x="73" y="68" width="26" height="39" rx="2" fill="#003580"/>
+  <rect x="101" y="68" width="26" height="39" rx="2" fill="#002a6b"/>
+  <line x1="100" y1="68" x2="100" y2="107" stroke="#FFD700" stroke-width="1.5"/>
+  <!-- Book lines left -->
+  <line x1="77" y1="76" x2="95" y2="76" stroke="#FFD700" stroke-width="1" opacity="0.7"/>
+  <line x1="77" y1="81" x2="95" y2="81" stroke="#FFD700" stroke-width="1" opacity="0.7"/>
+  <line x1="77" y1="86" x2="95" y2="86" stroke="#FFD700" stroke-width="1" opacity="0.7"/>
+  <line x1="77" y1="91" x2="95" y2="91" stroke="#FFD700" stroke-width="1" opacity="0.7"/>
+  <!-- Book lines right -->
+  <line x1="105" y1="76" x2="123" y2="76" stroke="#FFD700" stroke-width="1" opacity="0.5"/>
+  <line x1="105" y1="81" x2="123" y2="81" stroke="#FFD700" stroke-width="1" opacity="0.5"/>
+  <line x1="105" y1="86" x2="123" y2="86" stroke="#FFD700" stroke-width="1" opacity="0.5"/>
+  <line x1="105" y1="91" x2="123" y2="91" stroke="#FFD700" stroke-width="1" opacity="0.5"/>
+
+  <!-- Stars top -->
+  <polygon points="100,32 102.4,39 109.8,39 104,43.5 106.4,50.5 100,46 93.6,50.5 96,43.5 90.2,39 97.6,39" fill="#FFD700"/>
+  <polygon points="68,45 69.4,49.3 74,49.3 70.3,51.8 71.7,56.1 68,53.6 64.3,56.1 65.7,51.8 62,49.3 66.6,49.3" fill="#FFD700" opacity="0.8"/>
+  <polygon points="132,45 133.4,49.3 138,49.3 134.3,51.8 135.7,56.1 132,53.6 128.3,56.1 129.7,51.8 126,49.3 130.6,49.3" fill="#FFD700" opacity="0.8"/>
+
+  <!-- Text SMK -->
+  <text x="100" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="15" fill="#FFD700" letter-spacing="3">SMK</text>
+  <!-- Separator line -->
+  <line x1="55" y1="131" x2="145" y2="131" stroke="#FFD700" stroke-width="0.8" opacity="0.6"/>
+  <!-- Text DUA MEI -->
+  <text x="100" y="143" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="9" fill="white" letter-spacing="2">DUA MEI</text>
+  <!-- Text Yayasan -->
+  <text x="100" y="156" text-anchor="middle" font-family="Arial, sans-serif" font-size="6.5" fill="#93c5fd" letter-spacing="0.5">YAYASAN PENDIDIKAN</text>
+</svg>
