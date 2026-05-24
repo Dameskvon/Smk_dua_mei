@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import ProtectedPage from "@/components/ProtectedPage";
-import { UserRole, roleLabel, roleColor } from "@/lib/auth";
+import { UserRole, roleLabel, roleColor, authFetch } from "@/lib/auth";
 import {
   Users, Plus, Pencil, Trash2, X, Save, Search,
-  CheckCircle2, ShieldCheck, User,
+  CheckCircle2, ShieldCheck, User, Eye, EyeOff, KeyRound,
 } from "lucide-react";
 
 interface AkunUser {
@@ -18,8 +18,9 @@ interface AkunUser {
   aktif: boolean;
 }
 
-const emptyForm = (): Omit<AkunUser, "id"> => ({
+const emptyForm = (): Omit<AkunUser, "id"> & { password: string; resetPassword: boolean } => ({
   nama: "", username: "", jabatan: "", unitDepartemen: "", role: "guru", aktif: true,
+  password: "", resetPassword: false,
 });
 
 const unitList = [
@@ -38,13 +39,19 @@ export default function KelolaAkunPage() {
   const [form, setForm] = useState(emptyForm());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMsg, setSuccessMsg] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/users")
-      .then((r) => r.json())
-      .then((data) => setAkun(data.map((u: Omit<AkunUser, "aktif">) => ({ ...u, aktif: true }))))
-      .catch(() => {});
-  }, []);
+  const loadUsers = async () => {
+    try {
+      const res = await authFetch("/api/users");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) setAkun(data.map((u: Omit<AkunUser, "aktif">) => ({ ...u, aktif: true })));
+    } catch { /* network error */ }
+  };
+
+  useEffect(() => { loadUsers(); }, []);
 
   const filtered = akun.filter((u) => {
     const matchSearch = !search || u.nama.toLowerCase().includes(search.toLowerCase()) || u.username.toLowerCase().includes(search.toLowerCase());
@@ -52,8 +59,8 @@ export default function KelolaAkunPage() {
     return matchSearch && matchRole;
   });
 
-  const openTambah = () => { setForm(emptyForm()); setErrors({}); setSelectedId(null); setModalMode("tambah"); };
-  const openUbah = (u: AkunUser) => { const { id, ...rest } = u; setSelectedId(id); setForm(rest); setErrors({}); setModalMode("ubah"); };
+  const openTambah = () => { setForm(emptyForm()); setErrors({}); setSelectedId(null); setShowPass(false); setModalMode("tambah"); };
+  const openUbah = (u: AkunUser) => { const { id, ...rest } = u; setSelectedId(id); setForm({ ...rest, password: "", resetPassword: false }); setErrors({}); setShowPass(false); setModalMode("ubah"); };
   const openHapus = (id: string) => { setSelectedId(id); setModalMode("hapus"); };
   const closeModal = () => { setModalMode(null); setSelectedId(null); setErrors({}); };
 
@@ -63,8 +70,12 @@ export default function KelolaAkunPage() {
     if (!form.username.trim()) e.username = "Username wajib diisi";
     if (!form.jabatan.trim()) e.jabatan = "Jabatan wajib diisi";
     if (!form.unitDepartemen) e.unitDepartemen = "Unit/Departemen wajib dipilih";
-    if (modalMode === "tambah" && akun.find((u) => u.username === form.username.trim())) {
-      e.username = "Username sudah digunakan";
+    if (modalMode === "tambah") {
+      if (akun.find((u) => u.username === form.username.trim())) e.username = "Username sudah digunakan";
+      if (form.password && form.password.length < 6) e.password = "Password minimal 6 karakter";
+    }
+    if (modalMode === "ubah" && form.resetPassword && form.password.length < 6) {
+      e.password = "Password baru minimal 6 karakter";
     }
     return e;
   };
@@ -73,36 +84,39 @@ export default function KelolaAkunPage() {
     const e = validate();
     if (Object.keys(e).length > 0) { setErrors(e); return; }
 
-    if (modalMode === "tambah") {
-      const res = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nama: form.nama.trim(), username: form.username.trim(), jabatan: form.jabatan.trim(), unitDepartemen: form.unitDepartemen, role: form.role }),
-      });
-      const newUser = await res.json();
-      setAkun((prev) => [...prev, { ...newUser, aktif: true }]);
-      setSuccessMsg(`Akun "${newUser.nama}" berhasil ditambahkan.`);
-    } else if (modalMode === "ubah" && selectedId) {
-      const res = await fetch(`/api/users/${selectedId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nama: form.nama.trim(), jabatan: form.jabatan.trim(), unitDepartemen: form.unitDepartemen, role: form.role }),
-      });
-      const updated = await res.json();
-      setAkun((prev) => prev.map((u) => u.id === selectedId ? { ...u, ...updated, aktif: u.aktif } : u));
-      setSuccessMsg(`Akun "${form.nama}" berhasil diperbarui.`);
+    setSaving(true);
+
+    try {
+      if (modalMode === "tambah") {
+        const body: Record<string, string> = { nama: form.nama.trim(), username: form.username.trim(), jabatan: form.jabatan.trim(), unitDepartemen: form.unitDepartemen, role: form.role };
+        if (form.password.trim()) body.password = form.password;
+        const res = await authFetch("/api/users", { method: "POST", body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) { setErrors({ api: data.error ?? "Gagal menyimpan akun" }); return; }
+        setSuccessMsg(`Akun "${data.nama}" berhasil ditambahkan.`);
+      } else if (modalMode === "ubah" && selectedId) {
+        const patchBody: Record<string, string> = { nama: form.nama.trim(), jabatan: form.jabatan.trim(), unitDepartemen: form.unitDepartemen, role: form.role };
+        if (form.resetPassword && form.password.trim()) patchBody.password = form.password;
+        const res = await authFetch(`/api/users/${selectedId}`, { method: "PATCH", body: JSON.stringify(patchBody) });
+        const data = await res.json();
+        if (!res.ok) { setErrors({ api: data.error ?? "Gagal memperbarui akun" }); return; }
+        setSuccessMsg(`Akun "${form.nama}" berhasil diperbarui.`);
+      }
+    } finally {
+      setSaving(false);
     }
 
     closeModal();
+    await loadUsers();
     setTimeout(() => setSuccessMsg(""), 4000);
   };
 
   const handleHapus = async () => {
     const target = akun.find((u) => u.id === selectedId);
-    await fetch(`/api/users/${selectedId}`, { method: "DELETE" });
-    setAkun((prev) => prev.filter((u) => u.id !== selectedId));
+    await authFetch(`/api/users/${selectedId}`, { method: "DELETE" });
     setSuccessMsg(`Akun "${target?.nama}" berhasil dihapus.`);
     closeModal();
+    await loadUsers();
     setTimeout(() => setSuccessMsg(""), 4000);
   };
 
@@ -116,19 +130,13 @@ export default function KelolaAkunPage() {
 
   return (
     <ProtectedPage allowedRoles={["admin_it"]}>
-      <main className="max-w-6xl mx-auto px-4 py-10">
+      <main className="w-full px-8 py-10">
         <div className="mb-6">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-            <a href="/" className="hover:text-[#003580]">Beranda</a>
-            <span>/</span>
-            <span className="text-[#003580] font-semibold">Kelola Akun & Hak Akses</span>
-          </div>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <h1 className="text-2xl font-extrabold text-[#003580] flex items-center gap-2">
-                <Users size={24} /> Kelola Akun & Hak Akses
+                Kelola Akun & Hak Akses
               </h1>
-              <p className="text-gray-500 text-sm mt-1">Kelola data pengguna, role, dan hak akses sistem.</p>
             </div>
             <button onClick={openTambah} className="flex items-center gap-2 px-4 py-2.5 bg-[#003580] hover:bg-blue-900 text-white text-sm font-semibold rounded-xl transition">
               <Plus size={16} /> Tambah Akun
@@ -142,15 +150,33 @@ export default function KelolaAkunPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          {roleCounts.map(({ role, count }) => (
-            <div key={role} onClick={() => setFilterRole(filterRole === role ? "semua" : role)}
-              className={`border rounded-xl p-3 text-center cursor-pointer transition hover:shadow ${filterRole === role ? "ring-2 ring-blue-400 bg-blue-50" : "bg-white"}`}>
-              <p className="text-2xl font-extrabold text-[#003580]">{count}</p>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${roleColor[role]}`}>{roleLabel[role]}</span>
+        {(() => {
+          const roleCardStyle: Record<string, { iconBg: string; iconColor: string; bar: string }> = {
+            guru: { iconBg: "bg-blue-100", iconColor: "text-blue-600", bar: "bg-blue-500" },
+            kepala_sekolah: { iconBg: "bg-indigo-100", iconColor: "text-indigo-600", bar: "bg-indigo-500" },
+            admin: { iconBg: "bg-violet-100", iconColor: "text-violet-600", bar: "bg-violet-500" },
+            admin_it: { iconBg: "bg-purple-100", iconColor: "text-purple-600", bar: "bg-purple-500" },
+          };
+          return (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              {roleCounts.map(({ role, count }) => {
+                const s = roleCardStyle[role];
+                const isActive = filterRole === role;
+                return (
+                  <div key={role} onClick={() => setFilterRole(isActive ? "semua" : role)}
+                    className={`relative bg-white rounded-xl shadow-sm border cursor-pointer transition hover:shadow-md overflow-hidden ${isActive ? "ring-2 ring-offset-1 ring-blue-400 border-blue-200" : "border-gray-100"}`}>
+                    <div className={`absolute top-0 left-0 right-0 h-1 ${s.bar}`} />
+                    <div className="p-4 pt-4">
+                      <span className="text-3xl font-extrabold text-[#003580]">{count}</span>
+                      <p className="text-sm font-semibold text-gray-700 mt-2">{roleLabel[role]}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{count} pengguna aktif</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
+          );
+        })()}
 
         <div className="bg-white rounded-xl shadow border border-gray-100 p-4 mb-4 flex flex-wrap gap-3 items-center">
           <div className="flex-1 min-w-48 relative">
@@ -173,22 +199,15 @@ export default function KelolaAkunPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.map((u) => (
-                <tr key={u.id} className="hover:bg-gray-50 transition">
+                <tr key={u.id ?? u.username} className="hover:bg-gray-50 transition">
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
-                        <User size={14} className="text-[#003580]" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-800">{u.nama}</p>
-                        <p className="text-xs text-gray-400 font-mono">@{u.username}</p>
-                      </div>
-                    </div>
+                    <p className="font-semibold text-gray-800">{u.nama}</p>
+                    <p className="text-xs text-gray-400 font-mono">@{u.username}</p>
                   </td>
                   <td className="px-4 py-3"><p className="text-gray-700">{u.jabatan}</p><p className="text-xs text-gray-400">{u.unitDepartemen}</p></td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${roleColor[u.role]}`}>
-                      <ShieldCheck size={11} /> {roleLabel[u.role]}
+                    <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${roleColor[u.role]}`}>
+                      {roleLabel[u.role]}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -234,8 +253,28 @@ export default function KelolaAkunPage() {
                     className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100 disabled:text-gray-400 ${errors.username ? "border-red-400" : "border-gray-300"}`}
                     placeholder="Contoh: budi.santoso" />
                   {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
-                  {modalMode === "tambah" && <p className="text-xs text-gray-400 mt-1">Password awal = username</p>}
                 </div>
+
+                {modalMode === "tambah" && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Password *</label>
+                    <div className="relative">
+                      <input
+                        type={showPass ? "text" : "password"}
+                        value={form.password}
+                        onChange={(e) => setForm({ ...form, password: e.target.value })}
+                        placeholder="Kosongkan = password sama dengan username"
+                        className={`w-full border rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.password ? "border-red-400" : "border-gray-300"}`}
+                      />
+                      <button type="button" onClick={() => setShowPass(!showPass)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                    {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                    <p className="text-xs text-gray-400 mt-1">Minimal 6 karakter. Jika kosong, password = username.</p>
+                  </div>
+                )}
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Jabatan *</label>
                   <input type="text" value={form.jabatan} onChange={(e) => setForm({ ...form, jabatan: e.target.value })}
@@ -263,11 +302,42 @@ export default function KelolaAkunPage() {
                     ))}
                   </div>
                 </div>
+
+                {modalMode === "ubah" && (
+                  <div className="border border-dashed border-gray-300 rounded-lg p-3 space-y-3">
+                    <button type="button" onClick={() => setForm({ ...form, resetPassword: !form.resetPassword, password: "" })}
+                      className="flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-[#003580] transition">
+                      <KeyRound size={14} />
+                      {form.resetPassword ? "Batal Reset Password" : "Reset Password"}
+                    </button>
+                    {form.resetPassword && (
+                      <div>
+                        <div className="relative">
+                          <input
+                            type={showPass ? "text" : "password"}
+                            value={form.password}
+                            onChange={(e) => setForm({ ...form, password: e.target.value })}
+                            placeholder="Masukkan password baru"
+                            className={`w-full border rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.password ? "border-red-400" : "border-gray-300"}`}
+                          />
+                          <button type="button" onClick={() => setShowPass(!showPass)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                          </button>
+                        </div>
+                        {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
+              {errors.api && (
+                <div className="mx-6 mb-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{errors.api}</div>
+              )}
               <div className="px-6 py-4 border-t flex gap-3 justify-end">
                 <button onClick={closeModal} className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition">Batal</button>
-                <button onClick={handleSimpan} className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-[#003580] hover:bg-blue-900 rounded-lg transition">
-                  <Save size={14} /> Simpan
+                <button onClick={handleSimpan} disabled={saving} className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-[#003580] hover:bg-blue-900 rounded-lg transition disabled:opacity-60">
+                  <Save size={14} /> {saving ? "Menyimpan..." : "Simpan"}
                 </button>
               </div>
             </div>

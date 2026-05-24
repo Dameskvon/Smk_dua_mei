@@ -42,7 +42,7 @@ export default function KatalogPage() {
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-10">
+    <main className="w-full px-8 py-10">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">

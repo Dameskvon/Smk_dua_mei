@@ -60,10 +60,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Scrollable content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50">
-          {children}
-          <Footer />
-        </main>
+        <div className="flex-1 overflow-y-auto bg-gray-50">
+          <div className="min-h-full flex flex-col">
+            {children}
+            <Footer />
+          </div>
+        </div>
       </div>
     </div>
   );

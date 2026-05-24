@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { unitDepartemenList } from "@/lib/data";
 import { BarangItem } from "@/types";
-import { CheckCircle2, Plus, Trash2, ClipboardList, Package, MessageSquare, Send, ArrowRight, RotateCcw, X, ImageIcon } from "lucide-react";
+import { CheckCircle2, Plus, Trash2, ClipboardList, Package, MessageSquare, Send, ArrowRight, RotateCcw, X, ImageIcon, RefreshCw } from "lucide-react";
 import ProtectedPage from "@/components/ProtectedPage";
 import { useAuth } from "@/lib/auth";
 import { useAppState } from "@/lib/appState";
@@ -31,14 +32,15 @@ const initialForm: FormData = {
 const initialBarang: BarangItem = { id: "", namaBarang: "", jumlah: 1, satuan: "", keterangan: "" };
 
 const prioritasOptions = [
-  { value: "rendah",  label: "Rendah",           color: "text-green-700 bg-green-50 border-green-200" },
-  { value: "sedang",  label: "Sedang",            color: "text-yellow-700 bg-yellow-50 border-yellow-200" },
-  { value: "tinggi",  label: "Tinggi / Mendesak", color: "text-red-700 bg-red-50 border-red-200" },
+  { value: "rendah", label: "Rendah", activeColor: "text-green-700 bg-green-100 border-green-400 shadow-sm" },
+  { value: "sedang", label: "Sedang", activeColor: "text-yellow-700 bg-yellow-100 border-yellow-400 shadow-sm" },
+  { value: "tinggi", label: "Tinggi / Mendesak", activeColor: "text-red-700 bg-red-100 border-red-400 shadow-sm" },
 ];
 
 export default function PemesananPage() {
   const { user } = useAuth();
-  const { submitPermintaan } = useAppState();
+  const { submitPermintaan, revisiPermintaan, permintaanList } = useAppState();
+  const searchParams = useSearchParams();
 
   const [form, setForm] = useState<FormData>({
     ...initialForm,
@@ -51,6 +53,25 @@ export default function PemesananPage() {
   const [submitted, setSubmitted] = useState(false);
   const [nomorPesanan, setNomorPesanan] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [revisiDari, setRevisiDari] = useState<string | null>(null);
+
+  useEffect(() => {
+    const nomorRevisi = searchParams.get("revisi");
+    if (!nomorRevisi) return;
+    const asli = permintaanList.find((p) => p.nomorPesanan === nomorRevisi);
+    if (!asli) return;
+    setRevisiDari(nomorRevisi);
+    setForm({
+      namaPemesan: asli.namaPemesan,
+      jabatan: asli.jabatan,
+      unitDepartemen: asli.unitDepartemen,
+      keperluan: asli.keperluan,
+      tanggalDibutuhkan: asli.tanggalDibutuhkan,
+      prioritas: asli.prioritas,
+      catatanPemesan: asli.catatanPemesan ?? "",
+    });
+    setBarangList(asli.barangList.map((b) => ({ ...b, id: b.id || Date.now().toString() })));
+  }, [searchParams, permintaanList]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -104,10 +125,30 @@ export default function PemesananPage() {
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validate()) return;
-    const nomor = await submitPermintaan(
-      { ...form, barangList, tanggalPesan: new Date().toISOString().split("T")[0] },
-      user?.nama ?? form.namaPemesan
-    );
+
+    let nomor: string;
+
+    if (revisiDari) {
+      const asli = permintaanList.find((p) => p.nomorPesanan === revisiDari);
+      if (asli) {
+        nomor = await revisiPermintaan(
+          asli.id,
+          { keperluan: form.keperluan, tanggalDibutuhkan: form.tanggalDibutuhkan, prioritas: form.prioritas, catatanPemesan: form.catatanPemesan, barangList },
+          user?.nama ?? form.namaPemesan
+        );
+      } else {
+        nomor = await submitPermintaan(
+          { ...form, barangList, tanggalPesan: new Date().toISOString().split("T")[0] },
+          user?.nama ?? form.namaPemesan
+        );
+      }
+    } else {
+      nomor = await submitPermintaan(
+        { ...form, barangList, tanggalPesan: new Date().toISOString().split("T")[0] },
+        user?.nama ?? form.namaPemesan
+      );
+    }
+
     setNomorPesanan(nomor);
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -140,9 +181,13 @@ export default function PemesananPage() {
                 </div>
               </div>
 
-              <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Pemesanan Terkirim!</h2>
+              <h2 className="text-2xl font-extrabold text-gray-900 mb-2">
+                {revisiDari ? "Revisi Terkirim!" : "Pemesanan Terkirim!"}
+              </h2>
               <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-                Permintaan Anda telah diterima dan diteruskan ke Kepala Sekolah untuk ditinjau.
+                {revisiDari
+                  ? `Pemesanan ${revisiDari} telah diperbarui dan dikirim ulang ke Kepala Sekolah untuk ditinjau.`
+                  : "Permintaan Anda telah diterima dan diteruskan ke Kepala Sekolah untuk ditinjau."}
               </p>
 
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5 mb-6 text-left">
@@ -152,7 +197,7 @@ export default function PemesananPage() {
               </div>
 
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8 text-left">
-                <p className="text-xs font-bold text-amber-700 mb-1">📋 Alur Persetujuan</p>
+                <p className="text-xs font-bold text-amber-700 mb-1">Alur Persetujuan</p>
                 <div className="flex items-center gap-2 text-xs text-amber-600">
                   <span className="font-medium">Anda</span>
                   <ArrowRight size={12} />
@@ -195,17 +240,24 @@ export default function PemesananPage() {
 
   return (
     <ProtectedPage allowedRoles={["guru", "admin", "admin_it"]}>
-      <main className="max-w-4xl mx-auto px-4 py-10">
+      <main className="w-full px-8 py-10">
         {/* Header */}
         <div className="mb-8 animate-slide-up">
-          <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-            <a href="/" className="hover:text-[#003580] transition">Beranda</a>
-            <span>/</span>
-            <span className="text-[#003580] font-semibold">Pemesanan Barang</span>
-          </div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Form Pemesanan Barang</h1>
-          <p className="text-gray-500 text-sm mt-1">Ajukan pemesanan barang kebutuhan operasional SMK Dua Mei.</p>
+          <h1 className="text-2xl font-extrabold text-blue-900">Form Pemesanan Barang</h1>
         </div>
+
+        {/* Banner Revisi */}
+        {revisiDari && (
+          <div className="mb-6 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 flex items-start gap-3">
+            <RefreshCw size={18} className="text-orange-500 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-orange-700">Revisi Pemesanan</p>
+              <p className="text-xs text-orange-600 mt-0.5">
+                Form ini sudah diisi dari pemesanan <span className="font-mono font-bold">{revisiDari}</span> yang ditolak. Perbaiki data yang diperlukan lalu kirim ulang.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Progress steps */}
         <div className="flex items-center gap-3 mb-8 animate-slide-up delay-75">
@@ -276,17 +328,13 @@ export default function PemesananPage() {
               </div>
               <div>
                 {label("Prioritas")}
-                <div className="flex gap-2 flex-wrap">
+                <select name="prioritas" value={form.prioritas}
+                  onChange={(e) => setForm({ ...form, prioritas: e.target.value as FormData["prioritas"] })}
+                  className={`${inputBase} border-gray-200 bg-white`}>
                   {prioritasOptions.map((opt) => (
-                    <button key={opt.value} type="button"
-                      onClick={() => setForm({ ...form, prioritas: opt.value as FormData["prioritas"] })}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
-                        form.prioritas === opt.value ? opt.color + " shadow-sm" : "border-gray-200 text-gray-500 hover:border-gray-300"
-                      }`}>
-                      {opt.label}
-                    </button>
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
-                </div>
+                </select>
               </div>
             </div>
           </div>
@@ -398,7 +446,7 @@ export default function PemesananPage() {
           {/* Submit */}
           <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2 pb-8">
             <button type="button" onClick={handleReset}
-              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition">
+              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-orange-300 bg-orange-50 text-orange-600 font-semibold text-sm hover:bg-orange-100 hover:border-orange-400 transition">
               <RotateCcw size={15} /> Reset Form
             </button>
             <button type="submit"

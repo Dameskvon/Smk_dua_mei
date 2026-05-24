@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   title: "SMK Dua Mei — Sistem Pemesanan & Pengadaan Barang",
   description:
     "Platform digital pemesanan dan pengadaan barang internal SMK Dua Mei, Yayasan Pendidikan Dua Mei.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

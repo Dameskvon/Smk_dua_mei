@@ -78,7 +78,6 @@ export default function StatusBadge({ status, size = "md" }: StatusBadgeProps) {
 
   return (
     <span className={`inline-flex items-center gap-1.5 ${px} rounded-full ${text} font-semibold border ${cfg.bg} ${cfg.color} ${cfg.border}`}>
-      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
       {cfg.icon}
       {cfg.label}
     </span>

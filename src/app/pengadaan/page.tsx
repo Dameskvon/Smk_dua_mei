@@ -4,7 +4,7 @@ import { useState } from "react";
 import { unitDepartemenList, formatRupiah } from "@/lib/data";
 import { useAppState } from "@/lib/appState";
 import { useAuth } from "@/lib/auth";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Send, RotateCcw, ImageIcon, X } from "lucide-react";
 import ProtectedPage from "@/components/ProtectedPage";
 
 interface FormData {
@@ -56,6 +56,7 @@ export default function PengadaanPage() {
   const { submitPengadaan } = useAppState();
   const { user } = useAuth();
   const [form, setForm] = useState<FormData>(initialForm);
+  const [foto, setFoto] = useState<{ id: string; name: string; preview: string }[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [nomorPengadaan, setNomorPengadaan] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -100,8 +101,27 @@ export default function PengadaanPage() {
     setSubmitted(true);
   };
 
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    files.forEach((file) => {
+      if (!file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setFoto((prev) => [
+          ...prev,
+          { id: Date.now().toString() + Math.random(), name: file.name, preview: ev.target?.result as string },
+        ]);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  const removeFoto = (id: string) => setFoto((prev) => prev.filter((f) => f.id !== id));
+
   const handleReset = () => {
     setForm(initialForm);
+    setFoto([]);
     setSubmitted(false);
     setNomorPengadaan("");
     setErrors({});
@@ -149,265 +169,275 @@ export default function PengadaanPage() {
 
   return (
     <ProtectedPage allowedRoles={["guru", "admin", "admin_it"]}>
-    <main className="max-w-4xl mx-auto px-4 py-10">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-          <a href="/" className="hover:text-[#003580]">Beranda</a>
-          <span>/</span>
-          <span className="text-[#003580] font-semibold">Pengadaan Barang</span>
-        </div>
-        <h1 className="text-2xl font-extrabold text-[#003580]">Form Pengadaan Barang Internal</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Isi formulir pengadaan barang baru dengan spesifikasi dan estimasi anggaran yang lengkap.
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Data Pengaju */}
-        <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-          <h2 className="font-bold text-[#003580] text-base mb-5 flex items-center gap-2">
-            <span className="bg-[#003580] text-white w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">1</span>
-            Data Pengaju
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nama Lengkap <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="namaPengaju"
-                value={form.namaPengaju}
-                onChange={handleChange}
-                placeholder="Masukkan nama lengkap"
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.namaPengaju ? "border-red-400" : "border-gray-300"}`}
-              />
-              {errors.namaPengaju && <p className="text-red-500 text-xs mt-1">{errors.namaPengaju}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Jabatan <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="jabatan"
-                value={form.jabatan}
-                onChange={handleChange}
-                placeholder="Contoh: Kepala Jurusan TKJ"
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.jabatan ? "border-red-400" : "border-gray-300"}`}
-              />
-              {errors.jabatan && <p className="text-red-500 text-xs mt-1">{errors.jabatan}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Unit / Departemen <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="unitDepartemen"
-                value={form.unitDepartemen}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white ${errors.unitDepartemen ? "border-red-400" : "border-gray-300"}`}
-              >
-                <option value="">-- Pilih Unit/Departemen --</option>
-                {unitDepartemenList.map((u) => (
-                  <option key={u} value={u}>{u}</option>
-                ))}
-              </select>
-              {errors.unitDepartemen && <p className="text-red-500 text-xs mt-1">{errors.unitDepartemen}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
-              <select
-                name="prioritas"
-                value={form.prioritas}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-              >
-                <option value="rendah">Rendah</option>
-                <option value="sedang">Sedang</option>
-                <option value="tinggi">Tinggi / Mendesak</option>
-              </select>
-            </div>
-          </div>
+      <main className="w-full px-8 py-10">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-extrabold text-[#003580]">Form Pengadaan Barang Internal</h1>
         </div>
 
-        {/* Detail Barang */}
-        <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-          <h2 className="font-bold text-[#003580] text-base mb-5 flex items-center gap-2">
-            <span className="bg-[#003580] text-white w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">2</span>
-            Detail Barang yang Diadakan
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Jenis Barang <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="jenisBarang"
-                value={form.jenisBarang}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white ${errors.jenisBarang ? "border-red-400" : "border-gray-300"}`}
-              >
-                <option value="">-- Pilih Jenis Barang --</option>
-                {jenisBarangList.map((j) => (
-                  <option key={j} value={j}>{j}</option>
-                ))}
-              </select>
-              {errors.jenisBarang && <p className="text-red-500 text-xs mt-1">{errors.jenisBarang}</p>}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Data Pengaju */}
+          <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
+            <h2 className="font-bold text-[#003580] text-base mb-5 flex items-center gap-2">
+              <span className="bg-[#003580] text-white w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">1</span>
+              Data Pengaju
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Jumlah <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="jumlah"
-                  value={form.jumlah}
-                  onChange={handleChange}
-                  min={1}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Satuan <span className="text-red-500">*</span>
+                  Nama Lengkap <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  name="satuan"
-                  value={form.satuan}
+                  name="namaPengaju"
+                  value={form.namaPengaju}
                   onChange={handleChange}
-                  placeholder="Unit / Buah"
-                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.satuan ? "border-red-400" : "border-gray-300"}`}
+                  placeholder="Masukkan nama lengkap"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.namaPengaju ? "border-red-400" : "border-gray-300"}`}
                 />
-                {errors.satuan && <p className="text-red-500 text-xs mt-1">{errors.satuan}</p>}
+                {errors.namaPengaju && <p className="text-red-500 text-xs mt-1">{errors.namaPengaju}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Jabatan <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="jabatan"
+                  value={form.jabatan}
+                  onChange={handleChange}
+                  placeholder="Contoh: Kepala Jurusan TKJ"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.jabatan ? "border-red-400" : "border-gray-300"}`}
+                />
+                {errors.jabatan && <p className="text-red-500 text-xs mt-1">{errors.jabatan}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Unit / Departemen <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="unitDepartemen"
+                  value={form.unitDepartemen}
+                  onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white ${errors.unitDepartemen ? "border-red-400" : "border-gray-300"}`}
+                >
+                  <option value="">-- Pilih Unit/Departemen --</option>
+                  {unitDepartemenList.map((u) => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+                {errors.unitDepartemen && <p className="text-red-500 text-xs mt-1">{errors.unitDepartemen}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
+                <select
+                  name="prioritas"
+                  value={form.prioritas}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                >
+                  <option value="rendah">Rendah</option>
+                  <option value="sedang">Sedang</option>
+                  <option value="tinggi">Tinggi / Mendesak</option>
+                </select>
               </div>
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Spesifikasi Lengkap <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                name="spesifikasi"
-                value={form.spesifikasi}
-                onChange={handleChange}
-                rows={3}
-                placeholder="Tuliskan spesifikasi teknis lengkap (merek, tipe, ukuran, kapasitas, dll.)"
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none ${errors.spesifikasi ? "border-red-400" : "border-gray-300"}`}
-              />
-              {errors.spesifikasi && <p className="text-red-500 text-xs mt-1">{errors.spesifikasi}</p>}
-            </div>
           </div>
-        </div>
 
-        {/* Anggaran */}
-        <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-          <h2 className="font-bold text-[#003580] text-base mb-5 flex items-center gap-2">
-            <span className="bg-[#003580] text-white w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">3</span>
-            Anggaran &amp; Sumber Dana
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Estimasi Harga per Satuan (Rp) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="estimasiHarga"
-                value={form.estimasiHarga}
-                onChange={handleChange}
-                placeholder="Contoh: 5000000"
-                min={0}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.estimasiHarga ? "border-red-400" : "border-gray-300"}`}
-              />
-              {errors.estimasiHarga && <p className="text-red-500 text-xs mt-1">{errors.estimasiHarga}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sumber Dana <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="sumberDana"
-                value={form.sumberDana}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white ${errors.sumberDana ? "border-red-400" : "border-gray-300"}`}
-              >
-                <option value="">-- Pilih Sumber Dana --</option>
-                {sumberDanaList.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-              {errors.sumberDana && <p className="text-red-500 text-xs mt-1">{errors.sumberDana}</p>}
-            </div>
-            {totalEstimasi > 0 && (
-              <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-xs text-blue-600 font-medium mb-1">Total Estimasi Anggaran</p>
-                <p className="text-2xl font-extrabold text-[#003580]">{formatRupiah(totalEstimasi)}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {form.jumlah} {form.satuan || "unit"} × {formatRupiah(parseInt(form.estimasiHarga) || 0)}
-                </p>
+          {/* Detail Barang */}
+          <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
+            <h2 className="font-bold text-[#003580] text-base mb-5 flex items-center gap-2">
+              <span className="bg-[#003580] text-white w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">2</span>
+              Detail Barang yang Diadakan
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Jenis Barang <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="jenisBarang"
+                  value={form.jenisBarang}
+                  onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white ${errors.jenisBarang ? "border-red-400" : "border-gray-300"}`}
+                >
+                  <option value="">-- Pilih Jenis Barang --</option>
+                  {jenisBarangList.map((j) => (
+                    <option key={j} value={j}>{j}</option>
+                  ))}
+                </select>
+                {errors.jenisBarang && <p className="text-red-500 text-xs mt-1">{errors.jenisBarang}</p>}
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Justifikasi */}
-        <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
-          <h2 className="font-bold text-[#003580] text-base mb-5 flex items-center gap-2">
-            <span className="bg-[#003580] text-white w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">4</span>
-            Justifikasi &amp; Keterangan
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tujuan &amp; Alasan Pengadaan <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                name="tujuanPengadaan"
-                value={form.tujuanPengadaan}
-                onChange={handleChange}
-                rows={3}
-                placeholder="Jelaskan mengapa barang ini perlu diadakan, manfaatnya untuk kegiatan sekolah"
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none ${errors.tujuanPengadaan ? "border-red-400" : "border-gray-300"}`}
-              />
-              {errors.tujuanPengadaan && <p className="text-red-500 text-xs mt-1">{errors.tujuanPengadaan}</p>}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Jumlah <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="jumlah"
+                    value={form.jumlah}
+                    onChange={handleChange}
+                    min={1}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Satuan <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="satuan"
+                    value={form.satuan}
+                    onChange={handleChange}
+                    placeholder="Unit / Buah"
+                    className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.satuan ? "border-red-400" : "border-gray-300"}`}
+                  />
+                  {errors.satuan && <p className="text-red-500 text-xs mt-1">{errors.satuan}</p>}
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Spesifikasi Lengkap <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="spesifikasi"
+                  value={form.spesifikasi}
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="Tuliskan spesifikasi teknis lengkap (merek, tipe, ukuran, kapasitas, dll.)"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none ${errors.spesifikasi ? "border-red-400" : "border-gray-300"}`}
+                />
+                {errors.spesifikasi && <p className="text-red-500 text-xs mt-1">{errors.spesifikasi}</p>}
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Foto / Dokumen Pendukung <span className="text-gray-400 font-normal text-xs">(opsional)</span></label>
+                {foto.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {foto.map((f) => (
+                      <div key={f.id} className="relative group w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={f.preview} alt={f.name} className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => removeFoto(f.id)}
+                          className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center">
+                          <X size={16} className="text-white opacity-0 group-hover:opacity-100 transition" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/40 transition cursor-pointer w-fit">
+                  <ImageIcon size={15} className="text-gray-400" />
+                  <span className="text-sm text-gray-500 font-medium">Tambah foto pendukung</span>
+                  <input type="file" accept="image/*" multiple className="sr-only" onChange={handleFotoChange} />
+                </label>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Catatan Tambahan (opsional)
-              </label>
-              <textarea
-                name="catatanPengaju"
-                value={form.catatanPengaju}
-                onChange={handleChange}
-                rows={2}
-                placeholder="Informasi tambahan untuk tim pengadaan"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
-              />
+          </div>
+
+          {/* Anggaran */}
+          <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
+            <h2 className="font-bold text-[#003580] text-base mb-5 flex items-center gap-2">
+              <span className="bg-[#003580] text-white w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">3</span>
+              Anggaran &amp; Sumber Dana
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Estimasi Harga per Satuan (Rp) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  name="estimasiHarga"
+                  value={form.estimasiHarga}
+                  onChange={handleChange}
+                  placeholder="Contoh: 5000000"
+                  min={0}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.estimasiHarga ? "border-red-400" : "border-gray-300"}`}
+                />
+                {errors.estimasiHarga && <p className="text-red-500 text-xs mt-1">{errors.estimasiHarga}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Sumber Dana <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="sumberDana"
+                  value={form.sumberDana}
+                  onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white ${errors.sumberDana ? "border-red-400" : "border-gray-300"}`}
+                >
+                  <option value="">-- Pilih Sumber Dana --</option>
+                  {sumberDanaList.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                {errors.sumberDana && <p className="text-red-500 text-xs mt-1">{errors.sumberDana}</p>}
+              </div>
+              {totalEstimasi > 0 && (
+                <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-xs text-blue-600 font-medium mb-1">Total Estimasi Anggaran</p>
+                  <p className="text-2xl font-extrabold text-[#003580]">{formatRupiah(totalEstimasi)}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {form.jumlah} {form.satuan || "unit"} × {formatRupiah(parseInt(form.estimasiHarga) || 0)}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-        </div>
 
-        {/* Submit */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-end">
-          <button
-            type="button"
-            onClick={handleReset}
-            className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium text-sm hover:bg-gray-50 transition"
-          >
-            Reset Form
-          </button>
-          <button
-            type="submit"
-            className="px-8 py-2.5 bg-[#FFD700] text-[#003580] font-bold rounded-lg text-sm hover:bg-yellow-400 transition shadow"
-          >
-            Ajukan Pengadaan
-          </button>
-        </div>
-      </form>
-    </main>
+          {/* Keterangan */}
+          <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
+            <h2 className="font-bold text-[#003580] text-base mb-5 flex items-center gap-2">
+              <span className="bg-[#003580] text-white w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">4</span>
+              Keterangan
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tujuan &amp; Alasan Pengadaan <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="tujuanPengadaan"
+                  value={form.tujuanPengadaan}
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="Jelaskan mengapa barang ini perlu diadakan, manfaatnya untuk kegiatan sekolah"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none ${errors.tujuanPengadaan ? "border-red-400" : "border-gray-300"}`}
+                />
+                {errors.tujuanPengadaan && <p className="text-red-500 text-xs mt-1">{errors.tujuanPengadaan}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Catatan Tambahan (opsional)
+                </label>
+                <textarea
+                  name="catatanPengaju"
+                  value={form.catatanPengaju}
+                  onChange={handleChange}
+                  rows={2}
+                  placeholder="Informasi tambahan untuk tim pengadaan"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2 pb-8">
+            <button type="button" onClick={handleReset}
+              className="flex items-center justify-center gap-2 px-8 py-3 rounded-xl border border-orange-300 bg-orange-50 text-orange-600 font-semibold text-sm hover:bg-orange-100 hover:border-orange-400 transition min-w-[160px]">
+              <RotateCcw size={15} /> Reset Form
+            </button>
+            <button type="submit"
+              className="flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-white font-bold text-sm transition shadow-lg hover:shadow-xl hover:-translate-y-0.5 min-w-[160px]"
+              style={{ background: "linear-gradient(135deg, #003580 0%, #0047AB 100%)" }}>
+              <Send size={15} /> Ajukan Pengadaan
+            </button>
+          </div>
+        </form>
+      </main>
     </ProtectedPage>
   );
 }
