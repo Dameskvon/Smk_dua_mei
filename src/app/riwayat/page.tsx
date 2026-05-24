@@ -48,16 +48,10 @@ export default function RiwayatPage() {
     p === "tinggi" ? "text-red-600 bg-red-50" : p === "sedang" ? "text-yellow-600 bg-yellow-50" : "text-green-600 bg-green-50";
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-10">
+    <main className="w-full px-8 py-10">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-          <a href="/" className="hover:text-[#003580]">Beranda</a>
-          <span>/</span>
-          <span className="text-[#003580] font-semibold">Riwayat & Tracking</span>
-        </div>
         <h1 className="text-2xl font-extrabold text-[#003580]">Riwayat Pemesanan &amp; Pengadaan</h1>
-        <p className="text-gray-500 text-sm mt-1">Pantau status semua permintaan dan pengadaan barang SMK Dua Mei.</p>
       </div>
 
       {/* Filter & Search */}
@@ -94,8 +88,8 @@ export default function RiwayatPage() {
             key={t.key}
             onClick={() => setTab(t.key as TabType)}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${tab === t.key
-                ? "bg-[#003580] text-white shadow"
-                : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+              ? "bg-[#003580] text-white shadow"
+              : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
               }`}
           >
             {t.label}

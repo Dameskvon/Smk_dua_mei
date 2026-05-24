@@ -27,15 +27,16 @@ export default function LaporanPage() {
   const [adminUser, setAdminUser] = useState<Signatory | null>(null);
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("smk_token") : null;
-    if (!token) return;
+    const saved = typeof window !== "undefined" ? localStorage.getItem("smk_user") : null;
+    if (!saved) return;
+    const token = Buffer.from(saved).toString("base64");
     fetch("/api/users/signatories", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((data) => {
         if (data.kepalaSekolah) setKepalaSekolah(data.kepalaSekolah);
-        if (data.adminUser)     setAdminUser(data.adminUser);
+        if (data.adminUser) setAdminUser(data.adminUser);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const totalPemesanan = permintaanList.length;
@@ -111,18 +112,12 @@ export default function LaporanPage() {
 
   return (
     <ProtectedPage allowedRoles={["kepala_sekolah", "admin", "admin_it"]}>
-      <main className="max-w-7xl mx-auto px-4 py-10" ref={printRef}>
+      <main className="w-full px-8 py-10" ref={printRef}>
         {/* Header */}
         <div className="mb-6 screen-only">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-            <a href="/" className="hover:text-[#003580]">Beranda</a>
-            <span>/</span>
-            <span className="text-[#003580] font-semibold">Laporan</span>
-          </div>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-extrabold text-[#003580]">Laporan & Rekap Data</h1>
-              <p className="text-gray-500 text-sm mt-1">Ringkasan lengkap data pemesanan, pengadaan, dan stok barang SMK Dua Mei.</p>
             </div>
             <div className="flex items-center gap-2 print:hidden shrink-0">
               <button
@@ -131,7 +126,7 @@ export default function LaporanPage() {
                 className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-green-600 text-white text-sm font-bold shadow hover:bg-green-700 transition disabled:opacity-60"
               >
                 <Download size={15} />
-                {exporting ? "Mengekspor..." : "Export Excel (.xlsx)"}
+                {exporting ? "Mengekspor..." : "Export Excel"}
               </button>
               <button
                 onClick={handlePrint}
@@ -196,9 +191,9 @@ export default function LaporanPage() {
                   <p className="text-2xl font-extrabold">{formatRupiah(anggaranDisetujui)}</p>
                   <p className="text-green-200 text-xs mt-1">{totalAnggaran > 0 ? Math.round((anggaranDisetujui / totalAnggaran) * 100) : 0}% dari total</p>
                 </div>
-                <div className="bg-gradient-to-br from-orange-400 to-yellow-500 rounded-xl shadow p-5">
+                <div className="bg-gradient-to-br from-orange-400 to-yellow-500 text-black rounded-xl shadow p-5">
                   <p className="text-orange-900 text-xs mb-1 font-medium">Anggaran Menunggu</p>
-                  <p className="text-2xl font-extrabold text-[#003580]">{formatRupiah(anggaranMenunggu)}</p>
+                  <p className="text-2xl font-extrabold">{formatRupiah(anggaranMenunggu)}</p>
                   <p className="text-orange-800 text-xs mt-1">Belum diproses</p>
                 </div>
                 <div className="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-xl shadow p-5">
@@ -584,10 +579,6 @@ export default function LaporanPage() {
               Laporan dibuat otomatis oleh Sistem Pengadaan SMK Dua Mei •{" "}
               {new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}
             </p>
-            <div className="flex gap-3 justify-center mt-3">
-              <Link href="/dashboard" className="text-xs text-blue-500 hover:underline">← Dashboard</Link>
-              <Link href="/riwayat" className="text-xs text-blue-500 hover:underline">Riwayat →</Link>
-            </div>
           </div>
         </div>{/* end screen-only */}
 
@@ -629,10 +620,10 @@ export default function LaporanPage() {
           {(() => {
             const PH = { background: "#003580", color: "#fff", padding: "5px 10px", fontSize: "10pt", fontWeight: 700, letterSpacing: "0.5px", marginBottom: 0 } as React.CSSProperties;
             const TBL = { width: "100%", borderCollapse: "collapse" as const, marginBottom: 18, tableLayout: "auto" as const, fontFamily: "'Times New Roman', Georgia, serif", fontSize: "8.5pt" };
-            const TH  = (align: "left"|"center"|"right" = "left"): React.CSSProperties => ({ background: "#003580", color: "#fff", padding: "6px 8px", fontWeight: 700, border: "1px solid #444", textAlign: align, whiteSpace: "nowrap" });
-            const TD  = (row: number, align: "left"|"center"|"right" = "left"): React.CSSProperties => ({ background: row % 2 === 0 ? "#F0F4FA" : "#fff", padding: "4px 8px", border: "1px solid #ccc", textAlign: align, verticalAlign: "middle" });
-            const TF  = (align: "left"|"center"|"right" = "left"): React.CSSProperties => ({ background: "#E8EDF5", padding: "5px 8px", fontWeight: 700, color: "#003580", border: "1px solid #aaa", textAlign: align });
-            const anggaranMenunggu2 = pengadaanList.filter((p) => ["menunggu","diproses"].includes(p.status)).reduce((s, p) => s + p.estimasiHarga, 0);
+            const TH = (align: "left" | "center" | "right" = "left"): React.CSSProperties => ({ background: "#003580", color: "#fff", padding: "6px 8px", fontWeight: 700, border: "1px solid #444", textAlign: align, whiteSpace: "nowrap" });
+            const TD = (row: number, align: "left" | "center" | "right" = "left"): React.CSSProperties => ({ background: row % 2 === 0 ? "#F0F4FA" : "#fff", padding: "4px 8px", border: "1px solid #ccc", textAlign: align, verticalAlign: "middle" });
+            const TF = (align: "left" | "center" | "right" = "left"): React.CSSProperties => ({ background: "#E8EDF5", padding: "5px 8px", fontWeight: 700, color: "#003580", border: "1px solid #aaa", textAlign: align });
+            const anggaranMenunggu2 = pengadaanList.filter((p) => ["menunggu", "diproses"].includes(p.status)).reduce((s, p) => s + p.estimasiHarga, 0);
 
             /* Per Departemen computed */
             const deptMap: Record<string, { pem: number; pgd: number; anggaran: number }> = {};
@@ -658,26 +649,26 @@ export default function LaporanPage() {
                     </thead>
                     <tbody>
                       {([
-                        ["Total Pemesanan Barang",            permintaanList.length],
-                        ["Total Pengajuan Pengadaan",          pengadaanList.length],
-                        ["Total Seluruh Pengajuan",            totalItems],
+                        ["Total Pemesanan Barang", permintaanList.length],
+                        ["Total Pengajuan Pengadaan", pengadaanList.length],
+                        ["Total Seluruh Pengajuan", totalItems],
                         null,
-                        ["Menunggu Persetujuan",               statusCounts.menunggu],
-                        ["Sedang Diproses",                    statusCounts.diproses],
-                        ["Disetujui",                          statusCounts.disetujui],
-                        ["Selesai",                            statusCounts.selesai],
-                        ["Ditolak",                            statusCounts.ditolak],
-                        ["Revisi",                             statusCounts.revisi],
+                        ["Menunggu Persetujuan", statusCounts.menunggu],
+                        ["Sedang Diproses", statusCounts.diproses],
+                        ["Disetujui", statusCounts.disetujui],
+                        ["Selesai", statusCounts.selesai],
+                        ["Ditolak", statusCounts.ditolak],
+                        ["Revisi", statusCounts.revisi],
                         null,
-                        ["Total Estimasi Anggaran",            formatRupiah(totalAnggaran)],
-                        ["Anggaran Disetujui",                 formatRupiah(anggaranDisetujui)],
-                        ["Anggaran Menunggu / Diproses",       formatRupiah(anggaranMenunggu2)],
-                        ["Anggaran Ditolak",                   formatRupiah(anggaranDitolak)],
+                        ["Total Estimasi Anggaran", formatRupiah(totalAnggaran)],
+                        ["Anggaran Disetujui", formatRupiah(anggaranDisetujui)],
+                        ["Anggaran Menunggu / Diproses", formatRupiah(anggaranMenunggu2)],
+                        ["Anggaran Ditolak", formatRupiah(anggaranDitolak)],
                         null,
-                        ["Nilai Total Inventaris Stok",        formatRupiah(nilaiInventaris)],
-                        ["Jumlah Item Stok Menipis",           stokMenipis],
-                        ["Jumlah Item Stok Habis",             stokHabis],
-                      ] as ([string, string|number] | null)[]).map((row, i) =>
+                        ["Nilai Total Inventaris Stok", formatRupiah(nilaiInventaris)],
+                        ["Jumlah Item Stok Menipis", stokMenipis],
+                        ["Jumlah Item Stok Habis", stokHabis],
+                      ] as ([string, string | number] | null)[]).map((row, i) =>
                         row === null ? (
                           <tr key={i}><td colSpan={3} style={{ border: "1px solid #ccc", padding: 3, background: "#f8f9fa" }}></td></tr>
                         ) : (
@@ -873,7 +864,7 @@ export default function LaporanPage() {
                     <tbody>
                       {katalogList.map((b, i) => {
                         const kondisi = b.stok === 0 ? "Habis" : b.stok <= b.minStok ? "Menipis" : "Normal";
-                        const kColor  = kondisi === "Habis" ? "#DC2626" : kondisi === "Menipis" ? "#D97706" : "#16A34A";
+                        const kColor = kondisi === "Habis" ? "#DC2626" : kondisi === "Menipis" ? "#D97706" : "#16A34A";
                         return (
                           <tr key={b.id}>
                             <td style={TD(i, "center")}>{i + 1}</td>
@@ -941,7 +932,7 @@ export default function LaporanPage() {
                 {/* Footer */}
                 <div style={{ marginTop: 24, borderTop: "1px solid #ccc", paddingTop: 6, textAlign: "center", fontSize: "7.5pt", color: "#888", fontFamily: "'Times New Roman', serif" }}>
                   Dokumen ini dicetak secara otomatis oleh Sistem Pengadaan Internal SMK Dua Mei &bull;{" "}
-                  {new Date().toLocaleString("id-ID")} &bull; Dokumen sah tanpa tanda tangan basah jika dicetak dari sistem resmi.
+                  {new Date().toLocaleString("id-ID")} &bull; Dokumen sah tanpa tanda tangan basah jika dicetak dari sistem resmi
                 </div>
               </>
             );

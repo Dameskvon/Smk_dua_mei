@@ -8,10 +8,10 @@ import { useAuth } from "@/lib/auth";
 import { useAppState } from "@/lib/appState";
 
 const tipeConfig: Record<Notifikasi["tipe"], { icon: React.ReactNode; color: string; bg: string; border: string }> = {
-  sukses:    { icon: <CheckCircle2 size={20} />, color: "text-green-700",  bg: "bg-green-50",  border: "border-green-200" },
-  info:      { icon: <Info size={20} />,         color: "text-blue-700",   bg: "bg-blue-50",   border: "border-blue-200"  },
-  peringatan:{ icon: <AlertTriangle size={20} />,color: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200"},
-  ditolak:   { icon: <XCircle size={20} />,      color: "text-red-700",    bg: "bg-red-50",    border: "border-red-200"   },
+  sukses: { icon: <CheckCircle2 size={20} />, color: "text-green-700", bg: "bg-green-50", border: "border-green-200" },
+  info: { icon: <Info size={20} />, color: "text-blue-700", bg: "bg-blue-50", border: "border-blue-200" },
+  peringatan: { icon: <AlertTriangle size={20} />, color: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200" },
+  ditolak: { icon: <XCircle size={20} />, color: "text-red-700", bg: "bg-red-50", border: "border-red-200" },
 };
 
 export default function NotifikasiPage() {
@@ -41,25 +41,19 @@ export default function NotifikasiPage() {
     if (n.tipe === "info" && (n.targetRole === "admin" || n.targetRole === "kepala_sekolah")) return { label: "Tinjau & Proses", href: "/approval", icon: <ClipboardCheck size={13} />, style: "bg-[#003580] hover:bg-blue-900 text-white" };
     if (n.tipe === "info") return { label: "Pantau Status", href: "/riwayat", icon: <RefreshCw size={13} />, style: "bg-blue-500 hover:bg-blue-600 text-white" };
     if (n.tipe === "peringatan") return { label: "Ajukan Pengadaan", href: "/pengadaan", icon: <ShoppingCart size={13} />, style: "bg-orange-500 hover:bg-orange-600 text-white" };
-    if (n.tipe === "ditolak") return { label: "Revisi Pengajuan", href: n.jenisForm === "pengadaan" ? "/pengadaan" : "/pemesanan", icon: <ArrowRight size={13} />, style: "bg-red-500 hover:bg-red-600 text-white" };
+    if (n.tipe === "ditolak") return { label: "Revisi Pengajuan", href: n.jenisForm === "pengadaan" ? `/pengadaan?revisi=${n.nomorReferensi ?? ""}` : `/pemesanan?revisi=${n.nomorReferensi ?? ""}`, icon: <ArrowRight size={13} />, style: "bg-red-500 hover:bg-red-600 text-white" };
     return null;
   };
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10">
+    <main className="w-full px-8 py-10">
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-          <a href="/" className="hover:text-[#003580]">Beranda</a>
-          <span>/</span>
-          <span className="text-[#003580] font-semibold">Notifikasi</span>
-        </div>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-extrabold text-[#003580] flex items-center gap-3">
               Notifikasi
               {belumDibaca > 0 && <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{belumDibaca}</span>}
             </h1>
-            <p className="text-gray-500 text-sm mt-1">Notifikasi status pemesanan, pengadaan, dan peringatan stok.</p>
           </div>
           {belumDibaca > 0 && (
             <button onClick={tandaiSemuaBaca} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-blue-400 text-blue-600 bg-white hover:bg-blue-50 transition">
@@ -78,7 +72,7 @@ export default function NotifikasiPage() {
           return (
             <div key={tipe} onClick={() => setFilterTipe(filterTipe === tipe ? "semua" : tipe)}
               className={`border rounded-xl p-3 text-center cursor-pointer transition hover:shadow ${cfg.bg} ${cfg.border} ${filterTipe === tipe ? "ring-2 ring-offset-1 ring-blue-400" : ""}`}>
-              <div className="flex justify-center mb-1">{cfg.icon}</div>
+              <div className={`flex justify-center mb-1 ${cfg.color}`}>{cfg.icon}</div>
               <p className={`text-lg font-extrabold ${cfg.color}`}>{count}</p>
               <p className="text-xs text-gray-600">{label}</p>
             </div>

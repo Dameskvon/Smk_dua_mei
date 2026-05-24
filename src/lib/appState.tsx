@@ -16,6 +16,7 @@ interface AppStateContextType {
   isLoading: boolean;
   submitPermintaan: (data: Omit<FormPemesanan, "id" | "nomorPesanan" | "status" | "createdAt" | "updatedAt">, namaPemohon: string) => Promise<string>;
   submitPengadaan: (data: Omit<FormPengadaan, "id" | "nomorPengadaan" | "status" | "createdAt" | "updatedAt">, namaPemohon: string) => Promise<string>;
+  revisiPermintaan: (id: string, data: { keperluan: string; tanggalDibutuhkan: string; prioritas: "rendah" | "sedang" | "tinggi"; catatanPemesan?: string; barangList: FormPemesanan["barangList"] }, namaPemohon: string) => Promise<string>;
   setujuiItem: (id: string, jenis: Jenis, catatan: string, approverNama: string) => void;
   tolakItem: (id: string, jenis: Jenis, alasan: string, approverNama: string) => void;
   prosesItem: (id: string, jenis: Jenis) => void;
@@ -122,6 +123,31 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     addNotif(buatNotif(notif));
     saveNotif(notif);
     return newItem.nomorPengadaan;
+  };
+
+  const revisiPermintaan = async (
+    id: string,
+    data: { keperluan: string; tanggalDibutuhkan: string; prioritas: "rendah" | "sedang" | "tinggi"; catatanPemesan?: string; barangList: FormPemesanan["barangList"] },
+    namaPemohon: string
+  ): Promise<string> => {
+    const res = await authFetch(`/api/pemesanan/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ ...data, status: "menunggu" }),
+    });
+    const updated: FormPemesanan = await res.json();
+    setPermintaanList((prev) => prev.map((p) => p.id === id ? updated : p));
+
+    const notif = {
+      judul: "Revisi Pemesanan Dikirim",
+      pesan: `${namaPemohon} telah merevisi pemesanan ${updated.nomorPesanan} dan mengirim ulang untuk persetujuan.`,
+      tipe: "info" as const,
+      targetRole: "kepala_sekolah" as const,
+      nomorReferensi: updated.nomorPesanan,
+      jenisForm: "pemesanan" as const,
+    };
+    addNotif(buatNotif(notif));
+    saveNotif(notif);
+    return updated.nomorPesanan;
   };
 
   // ─── Status updates ──────────────────────────────────────────────────────
@@ -231,7 +257,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   return (
     <AppStateContext.Provider value={{
       permintaanList, pengadaanList, notifikasiList, katalogList, isLoading,
-      submitPermintaan, submitPengadaan,
+      submitPermintaan, submitPengadaan, revisiPermintaan,
       setujuiItem, tolakItem, prosesItem, selesaikanItem,
       tandaiBacaNotif, tandaiSemuaBaca, hapusNotif,
       updateKatalogStok, updateKatalogItem,

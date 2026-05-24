@@ -145,8 +145,9 @@ export default function CetakLaporanPage() {
 
   useEffect(() => {
     document.title = `Laporan SMK Dua Mei — ${new Date().toISOString().split("T")[0]}`;
-    const token = typeof window !== "undefined" ? localStorage.getItem("smk_token") : null;
-    if (!token) return;
+    const saved = typeof window !== "undefined" ? localStorage.getItem("smk_user") : null;
+    if (!saved) return;
+    const token = Buffer.from(saved).toString("base64");
     fetch("/api/users/signatories", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((data) => {

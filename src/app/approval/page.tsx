@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useAppState } from "@/lib/appState";
 import { FormPemesanan, FormPengadaan } from "@/types";
 
-type TabView = "menunggu" | "disetujui" | "semua";
+type TabView = "menunggu" | "disetujui" | "ditolak" | "semua";
 
 export default function ApprovalPage() {
   const { user } = useAuth();
@@ -44,11 +44,13 @@ export default function ApprovalPage() {
   const filtered = allItems.filter((i) => {
     if (tab === "menunggu") return i.status === "menunggu";
     if (tab === "disetujui") return i.status === "disetujui" || i.status === "diproses";
+    if (tab === "ditolak") return i.status === "ditolak";
     return true;
   });
 
   const menungguCount = allItems.filter((i) => i.status === "menunggu").length;
   const disetujuiCount = allItems.filter((i) => i.status === "disetujui" || i.status === "diproses").length;
+  const ditolakCount = allItems.filter((i) => i.status === "ditolak").length;
 
   const selectedItem = selectedId
     ? allItems.find((i) => i.id === selectedId)
@@ -110,34 +112,24 @@ export default function ApprovalPage() {
 
   return (
     <ProtectedPage allowedRoles={["kepala_sekolah", "admin", "admin_it"]}>
-      <main className="max-w-6xl mx-auto px-4 py-10">
+      <main className="w-full px-8 py-10">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-            <a href="/" className="hover:text-[#003580]">Beranda</a>
-            <span>/</span>
-            <span className="text-[#003580] font-semibold">Persetujuan</span>
-          </div>
           <h1 className="text-2xl font-extrabold text-[#003580]">Persetujuan Permintaan</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            {isKepsek
-              ? "Tinjau dan berikan keputusan atas permintaan yang masuk dari guru."
-              : "Proses permintaan yang telah disetujui oleh Kepala Sekolah."}
-          </p>
         </div>
 
         {/* Alur */}
         <div className="bg-gradient-to-r from-[#003580] to-[#0047AB] text-white rounded-xl p-5 mb-6 flex flex-wrap gap-4 items-center justify-between">
           <div className="flex items-center gap-3 flex-wrap">
             {[
-              { icon: <PlayCircle size={16}/>, label: "Guru Submit", active: false },
-              { icon: <Clock size={16}/>, label: "Menunggu Kepala Sekolah", active: isKepsek },
-              { icon: <CheckCircle2 size={16}/>, label: "Disetujui → Admin TU Proses", active: isAdmin },
-              { icon: <PackageCheck size={16}/>, label: "Selesai", active: false },
+              { icon: <PlayCircle size={16} />, label: "Guru Submit", active: false },
+              { icon: <Clock size={16} />, label: "Menunggu Kepala Sekolah", active: isKepsek },
+              { icon: <CheckCircle2 size={16} />, label: "Disetujui → Admin TU Proses", active: isAdmin },
+              { icon: <PackageCheck size={16} />, label: "Selesai", active: false },
             ].map((step, i) => (
               <div key={i} className="flex items-center gap-2">
                 {i > 0 && <span className="text-blue-400 text-xs">→</span>}
-                <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${step.active ? "bg-[#FFD700] text-[#003580]" : "bg-blue-800/50 text-blue-200"}`}>
+                <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${step.active ? "bg-white text-[#003580]" : "bg-blue-800/50 text-blue-200"}`}>
                   {step.icon} {step.label}
                 </span>
               </div>
@@ -157,6 +149,7 @@ export default function ApprovalPage() {
           {([
             { key: "menunggu", label: "Menunggu Persetujuan", count: menungguCount },
             { key: "disetujui", label: "Disetujui / Diproses", count: disetujuiCount },
+            { key: "ditolak", label: "Ditolak", count: ditolakCount },
             { key: "semua", label: "Semua", count: allItems.length },
           ] as { key: TabView; label: string; count: number }[]).map((t) => (
             <button
@@ -251,7 +244,7 @@ export default function ApprovalPage() {
 
                 {/* Catatan admin sebelumnya */}
                 {selectedItem.catatanAdmin && (
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 flex items-start gap-2 text-sm text-orange-700">
+                  <div className="bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 flex items-start gap-2 text-sm text-gray-600">
                     <MessageCircle size={14} className="mt-0.5 shrink-0" />
                     <span>{selectedItem.catatanAdmin}</span>
                   </div>

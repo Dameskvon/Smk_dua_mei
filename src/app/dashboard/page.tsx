@@ -5,7 +5,7 @@ import { formatRupiah, formatTanggal } from "@/lib/data";
 import StatusBadge from "@/components/StatusBadge";
 import {
   IconClipboard, IconTag, IconHourglass, IconRefresh, IconPencil,
-  IconCheckCircle, IconPackage, IconShieldCheck, IconBell, IconStore,
+  IconCheckCircle, IconPackage, IconShieldCheck, IconBell, IconStore, IconXCircle,
 } from "@/components/Icons";
 import Link from "next/link";
 import ProtectedPage from "@/components/ProtectedPage";
@@ -39,6 +39,7 @@ export default function DashboardPage() {
     { label: "Sedang Diproses", value: stats.diproses, icon: <IconRefresh size={20} />, color: "bg-indigo-500", sub: "Dalam proses" },
     { label: "Perlu Revisi", value: stats.revisi, icon: <IconPencil size={20} />, color: "bg-orange-400", sub: "Butuh perbaikan" },
     { label: "Selesai / Disetujui", value: stats.selesai, icon: <IconCheckCircle size={20} />, color: "bg-green-500", sub: "Berhasil" },
+    { label: "Ditolak", value: stats.ditolak, icon: <IconXCircle size={20} />, color: "bg-red-500", sub: "Tidak disetujui" },
   ];
 
   const recentPemesanan = [...permintaanList]
@@ -59,25 +60,19 @@ export default function DashboardPage() {
 
   return (
     <ProtectedPage allowedRoles={["kepala_sekolah", "admin", "admin_it"]}>
-      <main className="max-w-7xl mx-auto px-4 py-10">
+      <main className="w-full px-8 py-10">
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-              <a href="/" className="hover:text-[#003580]">Beranda</a>
-              <span>/</span>
-              <span className="text-[#003580] font-semibold">Dashboard</span>
-            </div>
-            <h1 className="text-2xl font-extrabold text-[#003580]">Dashboard Admin</h1>
-            <p className="text-gray-500 text-sm mt-1">Ringkasan dan statistik pemesanan serta pengadaan barang SMK Dua Mei.</p>
+            <h1 className="text-2xl font-extrabold text-[#003580]">Dashboard</h1>
           </div>
           <div className="flex gap-3 flex-wrap">
-            <Link href="/pemesanan" className="bg-[#003580] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-900 transition shadow">+ Pemesanan</Link>
-            <Link href="/pengadaan" className="bg-[#FFD700] text-[#003580] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-yellow-400 transition shadow">+ Pengadaan</Link>
+            <Link href="/pemesanan" className="bg-[#003580] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-900 transition shadow">Pemesanan</Link>
+            <Link href="/pengadaan" className="bg-[#FFD700] text-[#003580] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-yellow-400 transition shadow">Pengadaan</Link>
             <Link href="/laporan" className="bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition shadow">Laporan</Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
           {statCards.map((card) => (
             <div key={card.label} className="bg-white rounded-xl shadow border border-gray-100 p-4 text-center">
               <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full ${card.color} text-white mb-2`}>{card.icon}</div>
@@ -96,7 +91,7 @@ export default function DashboardPage() {
           </div>
           <div className="bg-gradient-to-br from-[#FFD700] to-[#FFA500] rounded-xl shadow p-6">
             <p className="text-yellow-900 text-sm mb-1 font-medium">Anggaran Disetujui</p>
-            <p className="text-3xl font-extrabold text-[#003580]">{formatRupiah(anggaranDisetujui)}</p>
+            <p className="text-3xl font-extrabold">{formatRupiah(anggaranDisetujui)}</p>
             <p className="text-yellow-800 text-xs mt-2">{pengadaanList.filter((p) => p.status === "disetujui").length} item disetujui</p>
           </div>
           <div className="bg-gradient-to-br from-red-500 to-red-700 text-white rounded-xl shadow p-6">
@@ -107,7 +102,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="bg-white rounded-xl shadow border border-gray-100 p-6 mb-8">
-          <h2 className="font-bold text-[#003580] text-base mb-5">Distribusi Status (Semua Pengajuan)</h2>
+          <h2 className="font-bold text-[#003580] text-base mb-5">Distribusi Status</h2>
           <div className="space-y-3">
             {statusDistribusi.map((s) => (
               <div key={s.label} className="flex items-center gap-3">
@@ -164,7 +159,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl shadow border border-gray-100 mt-6 p-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-bold text-[#003580] text-base">Rekap Pengadaan per Unit</h2>
-            <Link href="/laporan" className="text-xs text-blue-500 hover:underline">Laporan Lengkap →</Link>
+            <Link href="/laporan" className="text-xs text-blue-500 hover:underline">Laporan Lengkap</Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -190,19 +185,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-          {[
-            { href: "/katalog", icon: <IconPackage size={28} className="text-blue-600" />, label: "Katalog Barang", color: "bg-blue-50 border-blue-300" },
-            { href: "/approval", icon: <IconShieldCheck size={28} className="text-green-600" />, label: "Alur Persetujuan", color: "bg-green-50 border-green-300" },
-            { href: "/notifikasi", icon: <IconBell size={28} className="text-yellow-600" />, label: "Notifikasi", color: "bg-yellow-50 border-yellow-300" },
-            { href: "/stok", icon: <IconStore size={28} className="text-purple-600" />, label: "Manajemen Stok", color: "bg-purple-50 border-purple-300" },
-          ].map((l) => (
-            <Link key={l.href} href={l.href} className={`border rounded-xl p-4 text-center hover:shadow transition ${l.color}`}>
-              <div className="flex justify-center mb-2">{l.icon}</div>
-              <p className="text-xs font-semibold text-gray-700">{l.label}</p>
-            </Link>
-          ))}
-        </div>
+
       </main>
     </ProtectedPage>
   );
