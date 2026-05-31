@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   if (auth instanceof Response) return auth;
 
   const data = await prisma.katalogBarang.findMany({ orderBy: { namaBarang: "asc" } });
-  return ok(data.map((k) => serialize(k as never)));
+  return ok(data.map((k: unknown) => serialize(k as never)));
 }
 
 export async function POST(req: NextRequest) {
