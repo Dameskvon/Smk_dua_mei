@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 // Singleton pattern: pastikan hanya ada 1 koneksi database
 // (penting saat Next.js hot reload di development)
