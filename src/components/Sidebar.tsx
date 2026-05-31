@@ -13,16 +13,16 @@ import {
 import Logo from "@/components/Logo";
 
 const iconMap: Record<string, React.ReactNode> = {
-  "/":            <Home size={17} />,
-  "/pemesanan":   <ClipboardList size={17} />,
-  "/pengadaan":   <Tag size={17} />,
-  "/riwayat":     <Clock size={17} />,
-  "/katalog":     <Package size={17} />,
-  "/notifikasi":  <Bell size={17} />,
-  "/dashboard":   <BarChart3 size={17} />,
-  "/approval":    <ShieldCheck size={17} />,
-  "/laporan":     <FileText size={17} />,
-  "/stok":        <Store size={17} />,
+  "/": <Home size={17} />,
+  "/pemesanan": <ClipboardList size={17} />,
+  "/pengadaan": <Tag size={17} />,
+  "/riwayat": <Clock size={17} />,
+  "/katalog": <Package size={17} />,
+  "/notifikasi": <Bell size={17} />,
+  "/dashboard": <BarChart3 size={17} />,
+  "/approval": <ShieldCheck size={17} />,
+  "/laporan": <FileText size={17} />,
+  "/stok": <Store size={17} />,
   "/kelola-akun": <Users size={17} />,
 };
 
@@ -127,11 +127,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 key={link.href}
                 href={link.href}
                 onClick={onClose}
-                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
-                  isActive
-                    ? "text-white shadow-md"
-                    : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-                }`}
+                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${isActive
+                  ? "text-white shadow-md"
+                  : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                  }`}
                 style={isActive ? { background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)" } : {}}
               >
                 {isActive && (
@@ -145,9 +144,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 <span className="flex-1">{link.label}</span>
 
                 {isNotif && unreadCount > 0 && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${
-                    isActive ? "bg-white/25 text-white" : "bg-red-500 text-white"
-                  }`}>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${isActive ? "bg-white/25 text-white" : "bg-red-500 text-white"
+                    }`}>
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -194,8 +192,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 <p className="text-xs text-gray-500">Sesi Anda akan diakhiri</p>
               </div>
             </div>
-            <p className="text-sm text-gray-600 mb-5 leading-relaxed">
-              Anda akan diarahkan ke halaman login. Pastikan semua pekerjaan sudah tersimpan.
+            <p className="text-sm text-gray-600 mb-5 leading-relaxed text-center">
+              Anda akan diarahkan ke halaman login, pastikan semua pekerjaan sudah tersimpan.
             </p>
             <div className="flex gap-2.5">
               <button
@@ -209,7 +207,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition flex items-center justify-center gap-1.5"
               >
                 <LogOut size={14} />
-                Ya, Keluar
+                Keluar
               </button>
             </div>
           </div>

@@ -39,7 +39,7 @@ const prioritasOptions = [
 
 export default function PemesananPage() {
   const { user } = useAuth();
-  const { submitPermintaan, revisiPermintaan, permintaanList } = useAppState();
+  const { submitPermintaan, revisiPermintaan, permintaanList, isLoading } = useAppState();
   const searchParams = useSearchParams();
 
   const [form, setForm] = useState<FormData>({

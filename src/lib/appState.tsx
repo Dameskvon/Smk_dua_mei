@@ -210,13 +210,63 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const selesaikanItem = (id: string, jenis: Jenis) => {
     let nomor = "";
+    let targetItem: FormPemesanan | FormPengadaan | null = null;
 
     updateStatus(jenis, id, (p) => {
       nomor = jenis === "pemesanan" ? (p as FormPemesanan).nomorPesanan : (p as FormPengadaan).nomorPengadaan;
+      targetItem = p as FormPemesanan | FormPengadaan;
       return { ...p, status: "selesai" };
     });
 
     patchApi(`/api/${jenis}/${id}`, { status: "selesai" });
+
+    // ── Auto-update stok katalog ──────────────────────────────────────────────
+    if (targetItem) {
+      if (jenis === "pengadaan") {
+        // Pengadaan selesai → tambah stok (buat entry baru jika belum ada)
+        const pgd = targetItem as FormPengadaan;
+        const namaBarang = pgd.spesifikasi || pgd.jenisBarang;
+        setKatalogList((prev) => {
+          const existing = prev.find((k) => k.namaBarang.toLowerCase() === namaBarang.toLowerCase());
+          if (existing) {
+            const stokBaru = existing.stok + pgd.jumlah;
+            patchApi(`/api/katalog/${existing.id}`, { stok: stokBaru });
+            return prev.map((k) => k.id === existing.id ? { ...k, stok: stokBaru } : k);
+          } else {
+            const newItem: KatalogBarang = {
+              id: `k${Date.now()}`,
+              namaBarang,
+              kategori: pgd.jenisBarang,
+              stok: pgd.jumlah,
+              satuan: pgd.satuan,
+              hargaSatuan: Math.round(pgd.estimasiHarga / pgd.jumlah),
+              deskripsi: pgd.tujuanPengadaan || "",
+              minStok: Math.max(1, Math.round(pgd.jumlah * 0.2)),
+              gambarEmoji: "📦",
+            };
+            authFetch("/api/katalog", { method: "POST", body: JSON.stringify(newItem) })
+              .then((r) => r.json())
+              .then((saved) => {
+                setKatalogList((cur) => cur.map((k) => k.id === newItem.id ? { ...k, id: saved.id } : k));
+              })
+              .catch(() => {});
+            return [...prev, newItem];
+          }
+        });
+      } else {
+        // Pemesanan selesai → kurangi stok
+        const pem = targetItem as FormPemesanan;
+        pem.barangList.forEach((barang) => {
+          setKatalogList((prev) => {
+            const existing = prev.find((k) => k.namaBarang.toLowerCase() === barang.namaBarang.toLowerCase());
+            if (!existing) return prev;
+            const stokBaru = Math.max(0, existing.stok - barang.jumlah);
+            patchApi(`/api/katalog/${existing.id}`, { stok: stokBaru });
+            return prev.map((k) => k.id === existing.id ? { ...k, stok: stokBaru } : k);
+          });
+        });
+      }
+    }
 
     const label = jenis === "pemesanan" ? "Pemesanan" : "Pengadaan";
     const n = buatNotif({ judul: `${label} Selesai`, pesan: `Permintaan (${nomor}) telah selesai diproses. Barang siap diserahkan.`, tipe: "sukses", targetRole: "pemohon", nomorReferensi: nomor, jenisForm: jenis });

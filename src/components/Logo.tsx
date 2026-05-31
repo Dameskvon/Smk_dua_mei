@@ -13,6 +13,7 @@ export default function Logo({ size = 48, className = "" }: LogoProps) {
       width={size}
       height={size}
       className={className}
+      style={{ width: size, height: size }}
       priority
     />
   );

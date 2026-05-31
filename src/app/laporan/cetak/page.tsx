@@ -3,44 +3,48 @@
 import { useAppState } from "@/lib/appState";
 import { useAuth } from "@/lib/auth";
 import { formatRupiah, formatTanggal, unitDepartemenList, kategoriBarangList } from "@/lib/data";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ProtectedPage from "@/components/ProtectedPage";
 
 interface Signatory { nama: string; jabatan: string; }
 
 /* ── colour palette (mirrors exportExcel.ts) ── */
 const C = {
-  blue:   "#003580",
+  blue: "#016bffff",
   yellow: "#FCE183",
-  white:  "#FFFFFF",
-  gray1:  "#F0F4FA",
-  gray2:  "#E8EDF5",
-  red:    "#DC2626",
-  green:  "#16A34A",
-  amber:  "#D97706",
+  white: "#FFFFFF",
+  gray1: "#F0F4FA",
+  gray2: "#E8EDF5",
+  red: "#DC2626",
+  green: "#16A34A",
+  amber: "#D97706",
 };
 
 const statusColor: Record<string, string> = {
-  menunggu:  C.amber,
-  diproses:  "#2563EB",
+  menunggu: C.amber,
+  diproses: "#2563EB",
   disetujui: C.green,
-  selesai:   "#6B7280",
-  ditolak:   C.red,
-  revisi:    "#EA580C",
+  selesai: "#6B7280",
+  ditolak: C.red,
+  revisi: "#EA580C",
 };
 
 const fmtDate = () =>
   new Date().toLocaleDateString("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
 
 /* ── shared table styles ── */
+const FONT = "Calibri, 'Gill Sans', 'Trebuchet MS', sans-serif";
+const HEADER_BG = "#1a73e8"; // biru muda
+
 const th: React.CSSProperties = {
-  background: C.blue,
+  background: HEADER_BG,
   color: C.white,
   padding: "6px 10px",
   fontSize: "8.5pt",
   fontWeight: 700,
-  border: "1px solid #444",
+  border: "1px solid #5ba4f5",
   whiteSpace: "nowrap",
+  fontFamily: FONT,
 };
 const thC: React.CSSProperties = { ...th, textAlign: "center" };
 const thR: React.CSSProperties = { ...th, textAlign: "right" };
@@ -51,29 +55,32 @@ const td = (row: number): React.CSSProperties => ({
   fontSize: "8.5pt",
   border: "1px solid #ccc",
   verticalAlign: "middle",
+  fontFamily: FONT,
 });
 const tdC = (row: number): React.CSSProperties => ({ ...td(row), textAlign: "center" });
 const tdR = (row: number): React.CSSProperties => ({ ...td(row), textAlign: "right" });
 
 const tfootTd: React.CSSProperties = {
-  background: C.gray2,
+  background: "#dbeafe",
   padding: "5px 10px",
   fontSize: "8.5pt",
   fontWeight: 700,
-  color: C.blue,
-  border: "1px solid #aaa",
+  color: "#1e40af",
+  border: "1px solid #93c5fd",
+  fontFamily: FONT,
 };
 const tfootTdR: React.CSSProperties = { ...tfootTd, textAlign: "right" };
 const tfootTdC: React.CSSProperties = { ...tfootTd, textAlign: "center" };
 
 const sectionHeader: React.CSSProperties = {
-  background: C.blue,
+  background: HEADER_BG,
   color: C.white,
   padding: "5px 10px",
   fontSize: "10pt",
   fontWeight: 700,
   letterSpacing: "0.5px",
   marginBottom: 0,
+  fontFamily: FONT,
 };
 
 const table: React.CSSProperties = {
@@ -88,34 +95,109 @@ export default function CetakLaporanPage() {
   const { user } = useAuth();
   const [kepalaSekolah, setKepalaSekolah] = useState<Signatory | null>(null);
   const [adminUser, setAdminUser] = useState<Signatory | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const generatePDF = async () => {
+    const element = contentRef.current;
+    if (!element) return;
+    setGenerating(true);
+    try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+
+      const SCALE = 2;
+      const canvas = await html2canvas(element, {
+        scale: SCALE,
+        useCORS: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: -window.scrollY,
+      });
+
+      const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();   // ~841 pt
+      const pageH = pdf.internal.pageSize.getHeight();  // ~595 pt
+      const margin = 28; // ~10mm
+      const contentW = pageW - margin * 2;
+      const contentH = pageH - margin * 2;
+
+      // scale factor: canvas px → PDF pt
+      const px2pt = contentW / canvas.width;
+      const totalPt = canvas.height * px2pt;
+
+      // collect safe break points (bottom of every <tr>) in PDF pt
+      const elTop = element.getBoundingClientRect().top;
+      const safeBreaks: number[] = [0];
+      element.querySelectorAll("tr").forEach((row) => {
+        const bottom = row.getBoundingClientRect().bottom - elTop;
+        safeBreaks.push(bottom * SCALE * px2pt);
+      });
+      safeBreaks.push(totalPt);
+
+      // split into pages at row boundaries
+      let pageStart = 0;
+      let first = true;
+      while (pageStart < totalPt - 1) {
+        const pageEnd = pageStart + contentH;
+        // find largest safe break ≤ pageEnd that is > pageStart
+        let cut = pageEnd;
+        for (const bp of safeBreaks) {
+          if (bp > pageStart && bp <= pageEnd) cut = bp;
+        }
+        if (cut <= pageStart) cut = pageEnd; // fallback
+
+        const sliceHeightPx = Math.ceil((cut - pageStart) / px2pt);
+        const sliceStartPx = Math.round(pageStart / px2pt);
+
+        const slice = document.createElement("canvas");
+        slice.width = canvas.width;
+        slice.height = sliceHeightPx;
+        const ctx = slice.getContext("2d");
+        ctx?.drawImage(canvas, 0, sliceStartPx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+
+        if (!first) pdf.addPage();
+        pdf.addImage(slice.toDataURL("image/png"), "PNG", margin, margin, contentW, sliceHeightPx * px2pt);
+        first = false;
+        pageStart = cut;
+      }
+
+      pdf.save(`Laporan-SMK-Dua-Mei-${new Date().toISOString().split("T")[0]}.pdf`);
+      setTimeout(() => window.close(), 500);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   /* ── computed values (same as Excel export) ── */
-  const totalAnggaran     = pengadaanList.reduce((s, p) => s + p.estimasiHarga, 0);
-  const nilaiInventaris   = katalogList.reduce((s, b) => s + b.stok * b.hargaSatuan, 0);
-  const allItems          = [...permintaanList, ...pengadaanList];
-  const totalItems        = allItems.length;
+  const totalAnggaran = pengadaanList.reduce((s, p) => s + p.estimasiHarga, 0);
+  const nilaiInventaris = katalogList.reduce((s, b) => s + b.stok * b.hargaSatuan, 0);
+  const allItems = [...permintaanList, ...pengadaanList];
+  const totalItems = allItems.length;
 
   const statusCounts = {
-    menunggu:  allItems.filter((p) => p.status === "menunggu").length,
-    diproses:  allItems.filter((p) => p.status === "diproses").length,
+    menunggu: allItems.filter((p) => p.status === "menunggu").length,
+    diproses: allItems.filter((p) => p.status === "diproses").length,
     disetujui: allItems.filter((p) => p.status === "disetujui").length,
-    selesai:   allItems.filter((p) => p.status === "selesai").length,
-    ditolak:   allItems.filter((p) => p.status === "ditolak").length,
-    revisi:    allItems.filter((p) => p.status === "revisi").length,
+    selesai: allItems.filter((p) => p.status === "selesai").length,
+    ditolak: allItems.filter((p) => p.status === "ditolak").length,
+    revisi: allItems.filter((p) => p.status === "revisi").length,
   };
 
   const anggaranDisetujui = pengadaanList
     .filter((p) => p.status === "disetujui")
     .reduce((s, p) => s + p.estimasiHarga, 0);
-  const anggaranMenunggu  = pengadaanList
+  const anggaranMenunggu = pengadaanList
     .filter((p) => ["menunggu", "diproses"].includes(p.status))
     .reduce((s, p) => s + p.estimasiHarga, 0);
-  const anggaranDitolak   = pengadaanList
+  const anggaranDitolak = pengadaanList
     .filter((p) => p.status === "ditolak")
     .reduce((s, p) => s + p.estimasiHarga, 0);
 
   const stokMenipis = katalogList.filter((b) => b.stok > 0 && b.stok <= b.minStok).length;
-  const stokHabis   = katalogList.filter((b) => b.stok === 0).length;
+  const stokHabis = katalogList.filter((b) => b.stok === 0).length;
 
   /* Per departemen */
   const perDeptMap: Record<string, { pem: number; pgd: number; anggaran: number }> = {};
@@ -129,7 +211,7 @@ export default function CetakLaporanPage() {
     perDeptMap[p.unitDepartemen].anggaran += p.estimasiHarga;
   });
   const deptRows = Object.entries(perDeptMap).sort((a, b) => b[1].anggaran - a[1].anggaran);
-  const deptTot  = deptRows.reduce((s, [, d]) => ({ pem: s.pem + d.pem, pgd: s.pgd + d.pgd, anggaran: s.anggaran + d.anggaran }), { pem: 0, pgd: 0, anggaran: 0 });
+  const deptTot = deptRows.reduce((s, [, d]) => ({ pem: s.pem + d.pem, pgd: s.pgd + d.pgd, anggaran: s.anggaran + d.anggaran }), { pem: 0, pgd: 0, anggaran: 0 });
 
   /* Per jenis/kategori */
   const perJenis = kategoriBarangList
@@ -145,101 +227,72 @@ export default function CetakLaporanPage() {
 
   useEffect(() => {
     document.title = `Laporan SMK Dua Mei — ${new Date().toISOString().split("T")[0]}`;
+
+    // Preload PNG logo so html2canvas can capture it
+    const logoImg = new Image();
+    logoImg.src = "/logo.png";
+
     const saved = typeof window !== "undefined" ? localStorage.getItem("smk_user") : null;
-    if (!saved) return;
+    if (!saved) {
+      logoImg.onload = () => setTimeout(() => generatePDF(), 300);
+      logoImg.onerror = () => setTimeout(() => generatePDF(), 300);
+      return;
+    }
     const token = Buffer.from(saved).toString("base64");
     fetch("/api/users/signatories", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((data) => {
         if (data.kepalaSekolah) setKepalaSekolah(data.kepalaSekolah);
-        if (data.adminUser)     setAdminUser(data.adminUser);
+        if (data.adminUser) setAdminUser(data.adminUser);
       })
-      .catch(() => {});
+      .catch(() => { })
+      .finally(() => {
+        logoImg.onload = () => setTimeout(() => generatePDF(), 300);
+        logoImg.onerror = () => setTimeout(() => generatePDF(), 300);
+        if (logoImg.complete) setTimeout(() => generatePDF(), 300);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <ProtectedPage allowedRoles={["kepala_sekolah", "admin", "admin_it"]}>
-      {/* Landscape + screen background for this page only */}
-      {/* eslint-disable-next-line react/no-danger */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          @page { size: A4 landscape; margin: 10mm 14mm 15mm 14mm; }
-          body { background: white !important; }
-        }
-        @media screen {
-          body { background: #e5e7eb !important; }
-        }
-      ` }} />
-
-      {/* ── Screen controls (hidden when printing) ── */}
-      <div
-        className="screen-only"
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          background: C.blue,
-          padding: "10px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <span style={{ color: C.white, fontWeight: 700, fontSize: "14px" }}>
-          Preview Cetak Laporan — SMK Dua Mei
-        </span>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            onClick={() => window.history.back()}
-            style={{ padding: "6px 16px", borderRadius: 8, background: "rgba(255,255,255,0.15)", color: C.white, fontWeight: 600, fontSize: "13px", border: "1px solid rgba(255,255,255,0.3)", cursor: "pointer" }}
-          >
-            ← Kembali
-          </button>
-          <button
-            onClick={() => window.print()}
-            style={{ padding: "6px 20px", borderRadius: 8, background: C.yellow, color: C.blue, fontWeight: 700, fontSize: "13px", border: "none", cursor: "pointer" }}
-          >
-            🖨️ Cetak / Simpan PDF
-          </button>
-        </div>
+      {/* Loading overlay */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 100,
+        background: "#ffffff",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16,
+      }}>
+        <div style={{ width: 48, height: 48, border: `5px solid #e0eaff`, borderTop: `5px solid #1e6fff`, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <div style={{ color: C.blue, fontWeight: 700, fontSize: "16px" }}>Membuat PDF...</div>
+        <div style={{ color: "#5b8dee", fontSize: "13px" }}>File akan otomatis terunduh</div>
+        {/* eslint-disable-next-line react/no-danger */}
+        <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { to { transform: rotate(360deg); } }` }} />
       </div>
 
-      {/* ── Print Document ── */}
+      {/* Document rendered off-screen for html2canvas */}
       <div
+        ref={contentRef}
         id="laporan-print"
         style={{
-          maxWidth: "960px",
-          margin: "24px auto",
-          background: C.white,
+          position: "fixed", left: "-9999px", top: 0,
+          width: "1200px",
           padding: "32px 40px",
-          fontFamily: "'Times New Roman', Georgia, serif",
+          background: C.white,
+          fontFamily: FONT,
           fontSize: "9.5pt",
           color: "#111",
-          boxShadow: "0 4px 32px rgba(0,0,0,0.12)",
-          borderRadius: 4,
         }}
       >
         {/* ════════════════════════════
             KOP SURAT
         ════════════════════════════ */}
-        <div style={{ borderBottom: `3px solid ${C.blue}`, paddingBottom: 10, marginBottom: 14 }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <tbody>
-              <tr>
-                <td style={{ width: 90, verticalAlign: "middle", padding: 0, border: "none" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/logo-smk.svg" alt="Logo SMK Dua Mei" style={{ width: 80, height: 80 }} />
-                </td>
-                <td style={{ verticalAlign: "middle", paddingLeft: 14, border: "none" }}>
-                  <div style={{ fontSize: "19pt", fontWeight: 900, color: C.blue, letterSpacing: "0.5px" }}>SMK DUA MEI</div>
-                  <div style={{ fontSize: "10.5pt", fontWeight: 700, color: "#222", marginTop: 2 }}>Yayasan Pendidikan Dua Mei</div>
-                  <div style={{ fontSize: "8.5pt", color: "#555", marginTop: 1 }}>Jl. Raya Dua Mei No. 1, Ciputat Timur, Tangerang Selatan 15412</div>
-                  <div style={{ fontSize: "8.5pt", color: "#555" }}>Telp: (021) 7490-xxxx &nbsp;|&nbsp; Email: smkduamei@edu.id &nbsp;|&nbsp; NPSN: xxxxxxxx</div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div style={{ borderBottom: `3px solid ${C.blue}`, paddingBottom: 12, marginBottom: 14, textAlign: "center" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Logo SMK Dua Mei" style={{ width: 60, height: 60, display: "block", margin: "0 auto 8px" }} />
+          <div style={{ fontSize: "19pt", fontWeight: 900, color: C.blue, letterSpacing: "0.5px" }}>SMK DUA MEI</div>
+          <div style={{ fontSize: "10.5pt", fontWeight: 700, color: "#010000ff", marginTop: 2 }}>Yayasan Pendidikan Dua Mei</div>
+          <div style={{ fontSize: "9.5pt", color: "#555", marginTop: 2 }}>Jl. H.Abdul Gani No.135 Ciputat Tangerang, Kec. Ciputat Timur, Kota Tangerang Selatan, Banten, 15412</div>
+          <div style={{ fontSize: "9.5pt", color: "#555", marginTop: 1 }}>Telp: (021) 7490 034 &nbsp;|&nbsp; Email: duameismk135@yahoo.co.id &nbsp;|&nbsp; NPSN: 20603266</div>
         </div>
 
         {/* ════════════════════════════
@@ -268,30 +321,32 @@ export default function CetakLaporanPage() {
             </thead>
             <tbody>
               {([
-                ["Total Pemesanan Barang",            permintaanList.length],
-                ["Total Pengajuan Pengadaan",          pengadaanList.length],
-                ["Total Seluruh Pengajuan",            totalItems],
+                ["Total Pemesanan Barang", permintaanList.length],
+                ["Total Pengajuan Pengadaan", pengadaanList.length],
+                ["Total Seluruh Pengajuan", totalItems],
                 ["—", "—"],
-                ["Menunggu Persetujuan",               statusCounts.menunggu],
-                ["Sedang Diproses",                    statusCounts.diproses],
-                ["Disetujui",                          statusCounts.disetujui],
-                ["Selesai",                            statusCounts.selesai],
-                ["Ditolak",                            statusCounts.ditolak],
-                ["Revisi",                             statusCounts.revisi],
+                ["Menunggu Persetujuan", statusCounts.menunggu],
+                ["Sedang Diproses", statusCounts.diproses],
+                ["Disetujui", statusCounts.disetujui],
+                ["Selesai", statusCounts.selesai],
+                ["Ditolak", statusCounts.ditolak],
+                ["Revisi", statusCounts.revisi],
                 ["—", "—"],
-                ["Total Estimasi Anggaran",            formatRupiah(totalAnggaran)],
-                ["Anggaran Disetujui",                 formatRupiah(anggaranDisetujui)],
-                ["Anggaran Menunggu / Diproses",       formatRupiah(anggaranMenunggu)],
-                ["Anggaran Ditolak",                   formatRupiah(anggaranDitolak)],
+                ["Total Estimasi Anggaran", formatRupiah(totalAnggaran)],
+                ["Anggaran Disetujui", formatRupiah(anggaranDisetujui)],
+                ["Anggaran Menunggu / Diproses", formatRupiah(anggaranMenunggu)],
+                ["Anggaran Ditolak", formatRupiah(anggaranDitolak)],
                 ["—", "—"],
-                ["Nilai Total Inventaris Stok",        formatRupiah(nilaiInventaris)],
-                ["Jumlah Item Stok Menipis",           stokMenipis],
-                ["Jumlah Item Stok Habis",             stokHabis],
-              ] as [string, string | number][]).map(([label, val], i) => {
+                ["Nilai Total Inventaris Stok", formatRupiah(nilaiInventaris)],
+                ["Jumlah Item Stok Menipis", stokMenipis],
+                ["Jumlah Item Stok Habis", stokHabis],
+              ] as [string, string | number][]).map(([label, val], i, arr) => {
                 const isSep = label === "—";
+                const sepsBefore = arr.slice(0, i).filter(([l]) => l === "—").length;
+                const rowNum = i + 1 - sepsBefore;
                 return (
                   <tr key={i}>
-                    <td style={{ ...tdC(i), color: isSep ? "transparent" : undefined }}>{isSep ? "" : i + 1 - Math.floor(i / 4)}</td>
+                    <td style={{ ...tdC(i), color: isSep ? "transparent" : undefined }}>{isSep ? "" : rowNum}</td>
                     <td style={{ ...td(i), fontStyle: isSep ? "italic" : "normal", color: isSep ? "#ccc" : undefined }}>
                       {isSep ? "" : label}
                     </td>
@@ -496,7 +551,7 @@ export default function CetakLaporanPage() {
             <tbody>
               {katalogList.map((b, i) => {
                 const kondisi = b.stok === 0 ? "Habis" : b.stok <= b.minStok ? "Menipis" : "Normal";
-                const kColor  = kondisi === "Habis" ? C.red : kondisi === "Menipis" ? C.amber : C.green;
+                const kColor = kondisi === "Habis" ? C.red : kondisi === "Menipis" ? C.amber : C.green;
                 return (
                   <tr key={b.id}>
                     <td style={tdC(i)}>{i + 1}</td>
@@ -529,21 +584,15 @@ export default function CetakLaporanPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
               <tr>
-                <td style={{ border: "none", width: "33%", textAlign: "center", verticalAlign: "top", padding: "0 10px" }}>
+                <td style={{ border: "none", width: "50%", textAlign: "center", verticalAlign: "top", padding: "0 10px" }}>
+                  <div style={{ fontSize: "9pt", visibility: "hidden", marginBottom: 2 }}>placeholder</div>
                   <div style={{ fontSize: "9pt" }}>Dibuat oleh,</div>
-                  <div style={{ marginTop: 56, borderTop: "1px solid #000", paddingTop: 4, fontSize: "9pt", fontWeight: 700 }}>
+                  <div style={{ marginTop: 48, borderTop: "1px solid #000", paddingTop: 4, fontSize: "9pt", fontWeight: 700 }}>
                     {user?.nama ?? "—"}
                   </div>
                   <div style={{ fontSize: "8pt", color: "#555" }}>{user?.jabatan ?? "—"}</div>
                 </td>
-                <td style={{ border: "none", width: "33%", textAlign: "center", verticalAlign: "top", padding: "0 10px" }}>
-                  <div style={{ fontSize: "9pt" }}>Mengetahui,</div>
-                  <div style={{ marginTop: 56, borderTop: "1px solid #000", paddingTop: 4, fontSize: "9pt", fontWeight: 700 }}>
-                    {adminUser?.nama ?? "—"}
-                  </div>
-                  <div style={{ fontSize: "8pt", color: "#555" }}>{adminUser?.jabatan ?? "Admin Tata Usaha"}</div>
-                </td>
-                <td style={{ border: "none", width: "34%", textAlign: "center", verticalAlign: "top", padding: "0 10px" }}>
+                <td style={{ border: "none", width: "50%", textAlign: "center", verticalAlign: "top", padding: "0 10px" }}>
                   <div style={{ fontSize: "9pt", marginBottom: 2 }}>
                     Ciputat, {new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}
                   </div>
@@ -556,14 +605,6 @@ export default function CetakLaporanPage() {
               </tr>
             </tbody>
           </table>
-        </div>
-
-        {/* ════════════════════════════
-            FOOTER
-        ════════════════════════════ */}
-        <div style={{ marginTop: 24, borderTop: "1px solid #ccc", paddingTop: 6, textAlign: "center", fontSize: "7.5pt", color: "#888" }}>
-          Dokumen ini dicetak secara otomatis oleh Sistem Pengadaan Internal SMK Dua Mei &bull;{" "}
-          {new Date().toLocaleString("id-ID")} &bull; Dokumen sah tanpa tanda tangan basah jika dicetak dari sistem resmi.
         </div>
       </div>
     </ProtectedPage>

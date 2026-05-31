@@ -4,9 +4,14 @@ import type { FormPemesanan, FormPengadaan, KatalogBarang } from "@/types";
 type Cell = { v: string | number; s: Record<string, unknown> };
 type WS = Record<string, Cell | string | unknown[]>;
 
-const BLUE  = "003580";
-const YELLOW = "FCE183";
-const WHITE = "FFFFFF";
+const BLUE   = "003580";
+const WHITE  = "FFFFFF";
+// Per-sheet header colours
+const H_RINGKASAN  = "1a73e8"; // biru
+const H_PEMESANAN  = "0f766e"; // teal
+const H_PENGADAAN  = "b45309"; // amber gelap
+const H_DEPARTEMEN = "7c3aed"; // ungu
+const H_INVENTARIS = "166534"; // hijau gelap
 const GRAY1 = "F0F4FA";
 const GRAY2 = "E8EDF5";
 const RED   = "DC2626";
@@ -56,18 +61,24 @@ function sheet(
   centerCols: number[] = [],
   totalRow?: (string | number)[],
   widths?: number[],
+  headerColor: string = BLUE,
 ): WS {
+  const hdrStyle = (align: Record<string, string>) => ({
+    font: mkFont(true, WHITE, 10), fill: mkFill(headerColor), border: mkBorder(), alignment: align,
+  });
+  const titleStyle = { font: mkFont(true, WHITE, 10), fill: mkFill(headerColor), alignment: AL };
+
   const ws: WS = {};
   const range = { s: { c: 0, r: 0 }, e: { c: headers.length - 1, r: rows.length + 3 } };
 
-  ws["A1"] = { v: title, s: S.title };
-  for (let c = 1; c < headers.length; c++) ws[`${col(c)}1`] = { v: "", s: S.title };
+  ws["A1"] = { v: title, s: titleStyle };
+  for (let c = 1; c < headers.length; c++) ws[`${col(c)}1`] = { v: "", s: titleStyle };
 
   ws["A2"] = { v: `Tanggal Cetak: ${fmtDt()}`, s: S.sub };
   for (let c = 1; c < headers.length; c++) ws[`${col(c)}2`] = { v: "", s: S.sub };
 
   headers.forEach((h, c) => {
-    ws[`${col(c)}3`] = { v: h, s: rightCols.includes(c) ? S.hdrR : c === 0 ? S.hdrL : S.hdr };
+    ws[`${col(c)}3`] = { v: h, s: rightCols.includes(c) ? hdrStyle(AR) : c === 0 ? hdrStyle(AL) : hdrStyle(AC) };
   });
 
   rows.forEach((row, ri) => {
@@ -120,6 +131,7 @@ export function exportLaporanExcel(
   XLSXStyle.utils.book_append_sheet(wb, sheet(
     "RINGKASAN LAPORAN — SMK DUA MEI",
     ["No", "Indikator", "Nilai"],
+
     [
       [1,  "Total Pemesanan Barang",        permintaanList.length],
       [2,  "Total Pengajuan Pengadaan",      pengadaanList.length],
@@ -141,7 +153,7 @@ export function exportLaporanExcel(
       [15, "Jumlah Item Stok Menipis",      katalogList.filter(b => b.stok > 0 && b.stok <= b.minStok).length],
       [16, "Jumlah Item Stok Habis",        katalogList.filter(b => b.stok === 0).length],
     ],
-    [2], [0], undefined, [6, 42, 28],
+    [2], [0], undefined, [6, 42, 28], H_RINGKASAN,
   ), "Ringkasan");
 
   // ── Sheet 2: Pemesanan ────────────────────────────────────────────────────
@@ -155,7 +167,7 @@ export function exportLaporanExcel(
       p.status.charAt(0).toUpperCase() + p.status.slice(1),
       p.catatanAdmin ?? "-",
     ]),
-    [], [0, 6, 7], undefined, [5, 20, 14, 24, 24, 36, 12, 12, 28],
+    [], [0, 6, 7], undefined, [5, 20, 14, 24, 24, 36, 12, 12, 28], H_PEMESANAN,
   );
   permintaanList.forEach((p, i) => colorCell(wsPem, `H${i + 4}`, sColor(p.status)));
   XLSXStyle.utils.book_append_sheet(wb, wsPem, "Pemesanan");
@@ -172,7 +184,7 @@ export function exportLaporanExcel(
       p.status.charAt(0).toUpperCase() + p.status.slice(1),
       p.catatanAdmin ?? "-",
     ]),
-    [9], [0, 7, 11, 12], undefined, [5, 20, 14, 24, 24, 20, 36, 6, 10, 20, 16, 12, 12, 28],
+    [9], [0, 7, 11, 12], undefined, [5, 20, 14, 24, 24, 20, 36, 6, 10, 20, 16, 12, 12, 28], H_PENGADAAN,
   );
   const totRow = pengadaanList.length + 4;
   wsPgd[`A${totRow}`] = { v: "TOTAL ANGGARAN", s: S.totL };
@@ -205,7 +217,7 @@ export function exportLaporanExcel(
     ]),
     [5], [0, 2, 3, 4, 6],
     ["", "TOTAL", deptTot.pemesanan, deptTot.pengadaan, deptTot.pemesanan + deptTot.pengadaan, fmtRp(deptTot.anggaran), "100%"],
-    [5, 32, 14, 14, 16, 22, 12],
+    [5, 32, 14, 14, 16, 22, 12], H_DEPARTEMEN,
   ), "Per Departemen");
 
   // ── Sheet 5: Inventaris ───────────────────────────────────────────────────
@@ -218,7 +230,7 @@ export function exportLaporanExcel(
     }),
     [6, 7], [0, 3, 4, 8],
     ["", "TOTAL NILAI INVENTARIS", "", "", "", "", "", fmtRp(nilaiInventaris), ""],
-    [5, 30, 18, 8, 10, 10, 20, 20, 12],
+    [5, 30, 18, 8, 10, 10, 20, 20, 12], H_INVENTARIS,
   );
   katalogList.forEach((b, i) => {
     const k = b.stok === 0 ? "Habis" : b.stok <= b.minStok ? "Menipis" : "Normal";
