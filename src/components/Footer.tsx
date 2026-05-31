@@ -3,7 +3,7 @@ import Logo from "@/components/Logo";
 export default function Footer() {
   return (
     <footer className="mt-auto bg-white" style={{ borderTop: "1px solid #e5e7eb" }}>
-      <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-4 py-10 flex flex-col md:flex-row md:justify-between gap-8">
         {/* Brand */}
         <div>
           <div className="flex items-center gap-3 mb-3">
@@ -18,25 +18,14 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Quick Links */}
-        <div>
-          <h4 className="font-semibold text-blue-700 mb-3 text-xs uppercase tracking-widest">Akses Cepat</h4>
-          <ul className="space-y-2 text-sm text-gray-500">
-            <li><a href="/pemesanan" className="hover:text-blue-700 transition">Form Pemesanan Barang</a></li>
-            <li><a href="/pengadaan" className="hover:text-blue-700 transition">Form Pengadaan Barang</a></li>
-            <li><a href="/riwayat" className="hover:text-blue-700 transition">Riwayat Pesanan</a></li>
-            <li><a href="/dashboard" className="hover:text-blue-700 transition">Dashboard Admin</a></li>
-          </ul>
-        </div>
-
         {/* Contact */}
         <div>
-          <h4 className="font-semibold text-blue-700 mb-3 text-xs uppercase tracking-widest">Kontak</h4>
+          <h2 className="font-bold text-blue-700 mb-3 text-xs uppercase tracking-widest">Kontak</h2>
           <ul className="space-y-2 text-sm text-gray-500">
-            <li>Jl. Raya Dua Mei No. 1</li>
-            <li>Jakarta Selatan, DKI Jakarta</li>
-            <li>smkduamei@edu.id</li>
-            <li>(021) 123-4567</li>
+            <li>Jl. H.Abdul Gani No.135 Ciputat Tangerang, Kec. Ciputat Timur</li>
+            <li>Kota Tangerang Selatan, Banten </li>
+            <li>duameismk135@yahoo.co.id</li>
+            <li>(021) 7490034</li>
           </ul>
         </div>
       </div>

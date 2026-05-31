@@ -38,16 +38,14 @@ export const unitDepartemenList = [
   "Kurikulum",
   "Kesiswaan",
   "Humas",
-  "Jurusan TKJ",
-  "Jurusan RPL",
   "Jurusan AKL",
-  "Jurusan OTKP",
-  "Jurusan BDP",
+  "Jurusan MPLB",
+  "Jurusan TJKT",
+  "Jurusan DKV",
   "Perpustakaan",
   "UKS",
   "BK",
   "Lab Komputer",
-  "Lab IPA",
 ];
 
 export const kategoriBarangList = [
@@ -55,7 +53,6 @@ export const kategoriBarangList = [
   "Peralatan Elektronik",
   "Furnitur & Perlengkapan",
   "Peralatan Lab / Praktik",
-  "Software & Lisensi",
   "Buku & Referensi",
   "Peralatan Olahraga",
   "Perlengkapan Kebersihan",

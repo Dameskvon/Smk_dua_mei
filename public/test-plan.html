@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<title>Rencana Pengujian — Sistem Pengadaan SMK Dua Mei</title>
+<style>
+  @page { size: A4; margin: 25mm 18mm 25mm 28mm; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:'Times New Roman',Times,serif; font-size:11pt; color:#000; background:#fff; line-height:1.5; }
+
+  .kop{ display:flex; align-items:center; gap:14px; border-bottom:3px double #000; padding-bottom:10px; margin-bottom:20px; }
+  .kop img{ width:68px; height:68px; object-fit:contain; }
+  .kop-text{ flex:1; text-align:center; }
+  .kop-text .s1{ font-size:16pt; font-weight:bold; }
+  .kop-text .s2{ font-size:11pt; font-weight:bold; margin-top:2px; }
+  .kop-text .s3{ font-size:9.5pt; margin-top:2px; }
+
+  .bab { font-size:12pt; font-weight:bold; margin:22px 0 4px; }
+  .sub { font-size:11.5pt; font-weight:bold; margin:18px 0 4px; padding-left:20px; }
+  .cap { font-style:italic; text-align:center; font-size:11pt; margin-bottom:6px; }
+
+  table{ width:100%; border-collapse:collapse; margin-bottom:22px; font-size:10pt; }
+  th,td{ border:1px solid #000; padding:5px 6px; vertical-align:top; }
+  th{ text-align:center; font-weight:bold; }
+  td.no{ text-align:center; }
+  td.c { text-align:center; }
+
+  .pb{ page-break-before:always; }
+  .footer{ margin-top:24px; text-align:center; font-size:9pt; border-top:1px solid #000; padding-top:5px; }
+</style>
+</head>
+<body>
+
+<!-- KOP -->
+<div class="kop">
+  <img src="/logo.png" alt="Logo SMK Dua Mei"/>
+  <div class="kop-text">
+    <div class="s1">SMK DUA MEI</div>
+    <div class="s2">Yayasan Pendidikan Dua Mei</div>
+    <div class="s3">Jl. H. Abdul Gani No.135 Ciputat Timur, Kota Tangerang Selatan, Banten 15412</div>
+    <div class="s3">Telp: (021) 7490034 &nbsp;|&nbsp; Email: duameismk135@yahoo.co.id</div>
+  </div>
+</div>
+
+<div class="bab">3.6 &nbsp; Pengujian Sistem Berdasarkan Role Pengguna</div>
+
+<!-- ══════════════════════════════════════════════════════
+     3.6.1 ROLE: GURU
+══════════════════════════════════════════════════════ -->
+<div class="sub">3.6.1 &nbsp; Pengujian Role Guru</div>
+
+<div class="cap">Tabel 3.1 Pengujian Halaman Login (Role: Guru)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Form Login</td>
+      <td>Email: guru@smkduamei.sch.id<br/>Password: 123456</td>
+      <td>Berhasil login, diarahkan ke halaman Beranda dengan menu Guru</td>
+      <td>Berhasil login dan tampil halaman beranda dengan menu Guru</td>
+      <td class="c">Sesuai</td><td>Data akun Guru valid</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Form Login</td>
+      <td>Email: guru@smkduamei.sch.id<br/>Password: salah123</td>
+      <td>Gagal login, muncul notifikasi error "Email atau password salah"</td>
+      <td>Gagal login, muncul notifikasi error</td>
+      <td class="c">Sesuai</td><td>Password tidak valid</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Form Login</td>
+      <td>Email dan Password dikosongkan, klik tombol Masuk</td>
+      <td>Muncul pesan validasi pada field yang kosong</td>
+      <td>Muncul pesan validasi, form tidak terkirim</td>
+      <td class="c">Sesuai</td><td>Validasi field wajib berjalan</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="cap">Tabel 3.2 Pengujian Halaman Beranda (Role: Guru)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Halaman Beranda</td>
+      <td>Akses halaman utama (/)</td>
+      <td>Tampil halaman beranda dengan ringkasan status pengajuan milik Guru</td>
+      <td>Halaman beranda tampil dengan data statistik pengajuan</td>
+      <td class="c">Sesuai</td><td>Halaman dapat diakses</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Navigasi Sidebar</td>
+      <td>Lihat menu navigasi di sidebar</td>
+      <td>Menu yang tampil: Beranda, Pemesanan Barang, Pengadaan Barang, Riwayat, Katalog, Notifikasi</td>
+      <td>Menu tampil sesuai hak akses role Guru</td>
+      <td class="c">Sesuai</td><td>Menu admin tidak muncul</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="cap">Tabel 3.3 Pengujian Form Pemesanan Barang (Role: Guru)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Form Pemesanan</td>
+      <td>Akses halaman /pemesanan</td>
+      <td>Form pemesanan tampil dengan field nama, jabatan, unit, keperluan, tanggal, dan daftar barang</td>
+      <td>Halaman form pemesanan berhasil ditampilkan</td>
+      <td class="c">Sesuai</td><td>Halaman dapat diakses</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Form Pemesanan</td>
+      <td>Isi semua field dengan data valid:<br/>Keperluan: Kebutuhan ATK Kelas<br/>Tanggal: 30/06/2026<br/>Prioritas: Sedang<br/>Barang: Pulpen — 10 pcs</td>
+      <td>Pemesanan berhasil, nomor PES/2026/XXX terbuat, status "menunggu"</td>
+      <td>Pemesanan berhasil dibuat dengan nomor urut dan status menunggu</td>
+      <td class="c">Sesuai</td><td>Notifikasi dikirim ke Admin TU</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Form Pemesanan</td>
+      <td>Kirim form tanpa mengisi field Keperluan</td>
+      <td>Muncul pesan validasi "Keperluan wajib diisi"</td>
+      <td>Pesan validasi muncul, form tidak terkirim</td>
+      <td class="c">Sesuai</td><td>Field wajib tervalidasi</td>
+    </tr>
+    <tr>
+      <td class="no">4.</td><td>Form Pemesanan</td>
+      <td>Kirim form tanpa menambahkan barang apapun</td>
+      <td>Muncul pesan validasi "Minimal 1 barang harus diisi"</td>
+      <td>Pesan validasi muncul, form tidak terkirim</td>
+      <td class="c">Sesuai</td><td>Daftar barang wajib diisi</td>
+    </tr>
+    <tr>
+      <td class="no">5.</td><td>Tambah Barang</td>
+      <td>Klik tombol "+ Tambah Barang"</td>
+      <td>Baris input barang baru muncul di daftar</td>
+      <td>Baris baru berhasil ditambahkan</td>
+      <td class="c">Sesuai</td><td>Dapat menambah lebih dari 1 barang</td>
+    </tr>
+    <tr>
+      <td class="no">6.</td><td>Hapus Barang</td>
+      <td>Klik ikon hapus (X) pada salah satu baris barang</td>
+      <td>Baris barang terhapus dari daftar</td>
+      <td>Baris berhasil dihapus</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="cap">Tabel 3.4 Pengujian Form Pengadaan Barang (Role: Guru)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Form Pengadaan</td>
+      <td>Akses halaman /pengadaan</td>
+      <td>Form pengadaan tampil dengan semua field tersedia</td>
+      <td>Halaman form pengadaan berhasil ditampilkan</td>
+      <td class="c">Sesuai</td><td>Halaman dapat diakses</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Form Pengadaan</td>
+      <td>Isi semua field:<br/>Jenis: Peralatan Elektronik<br/>Spesifikasi: Proyektor Epson<br/>Jumlah: 2<br/>Satuan: Unit<br/>Harga: Rp 5.000.000<br/>Sumber Dana: Dana BOS</td>
+      <td>Pengadaan berhasil, nomor PGD/2026/XXX terbuat</td>
+      <td>Pengadaan berhasil dibuat dengan nomor urut</td>
+      <td class="c">Sesuai</td><td>Estimasi total terhitung otomatis</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Form Pengadaan</td>
+      <td>Isi field Estimasi Harga dengan nilai 0</td>
+      <td>Muncul validasi "Harga estimasi harus lebih dari 0"</td>
+      <td>Pesan validasi muncul, form tidak terkirim</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">4.</td><td>Form Pengadaan</td>
+      <td>Isi field Jumlah dengan nilai 0</td>
+      <td>Muncul validasi "Jumlah minimal 1"</td>
+      <td>Pesan validasi muncul, form tidak terkirim</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="cap">Tabel 3.5 Pengujian Halaman Riwayat, Katalog, dan Notifikasi (Role: Guru)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Halaman Riwayat</td>
+      <td>Akses halaman /riwayat</td>
+      <td>Tampil daftar pemesanan dan pengadaan milik Guru yang login</td>
+      <td>Riwayat tampil hanya data milik pengguna yang sedang login</td>
+      <td class="c">Sesuai</td><td>Data milik Guru lain tidak tampil</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Detail Riwayat</td>
+      <td>Klik salah satu item pada daftar riwayat</td>
+      <td>Panel detail tampil di sisi kanan berisi informasi lengkap pengajuan</td>
+      <td>Detail pengajuan tampil dengan status dan daftar barang</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Revisi Pemesanan</td>
+      <td>Klik tombol Revisi pada pemesanan berstatus "ditolak"</td>
+      <td>Form revisi terbuka dengan data lama, nomor pemesanan tetap sama</td>
+      <td>Form revisi berhasil terbuka dengan data sebelumnya terisi</td>
+      <td class="c">Sesuai</td><td>Nomor tidak berubah saat revisi</td>
+    </tr>
+    <tr>
+      <td class="no">4.</td><td>Halaman Katalog</td>
+      <td>Akses halaman /katalog</td>
+      <td>Tampil daftar barang tersedia beserta status stok tiap item</td>
+      <td>Katalog barang tampil dengan informasi stok dan status kondisi</td>
+      <td class="c">Sesuai</td><td>Filter tersedia, menipis, habis berfungsi</td>
+    </tr>
+    <tr>
+      <td class="no">5.</td><td>Filter Katalog</td>
+      <td>Klik filter "Menipis" pada halaman katalog</td>
+      <td>Hanya barang dengan stok di bawah minimum yang tampil</td>
+      <td>Filter berfungsi, hanya item menipis yang ditampilkan</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">6.</td><td>Halaman Notifikasi</td>
+      <td>Akses halaman /notifikasi</td>
+      <td>Tampil daftar notifikasi status pengajuan milik Guru</td>
+      <td>Notifikasi tampil sesuai aktivitas pengajuan Guru</td>
+      <td class="c">Sesuai</td><td>Badge jumlah belum dibaca tampil di sidebar</td>
+    </tr>
+    <tr>
+      <td class="no">7.</td><td>Akses Halaman Terlarang</td>
+      <td>Akses URL /approval saat login sebagai Guru</td>
+      <td>Halaman "Akses Ditolak" tampil</td>
+      <td>Halaman akses ditolak tampil dengan pesan role tidak sesuai</td>
+      <td class="c">Sesuai</td><td>Hak akses berhasil dibatasi</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════════════
+     3.6.2 ROLE: KEPALA SEKOLAH
+══════════════════════════════════════════════════════ -->
+<div class="sub pb">3.6.2 &nbsp; Pengujian Role Kepala Sekolah</div>
+
+<div class="cap">Tabel 3.6 Pengujian Login dan Dashboard (Role: Kepala Sekolah)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Form Login</td>
+      <td>Email: kepsek@smkduamei.sch.id<br/>Password: 123456</td>
+      <td>Berhasil login, tampil menu Kepala Sekolah</td>
+      <td>Berhasil login dan menu Kepala Sekolah tampil</td>
+      <td class="c">Sesuai</td><td>Data akun Kepala Sekolah valid</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Navigasi Sidebar</td>
+      <td>Lihat menu navigasi di sidebar</td>
+      <td>Menu: Beranda, Dashboard, Persetujuan, Laporan, Riwayat, Notifikasi</td>
+      <td>Menu tampil sesuai hak akses Kepala Sekolah</td>
+      <td class="c">Sesuai</td><td>Menu Stok dan Kelola Akun tidak tampil</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Halaman Dashboard</td>
+      <td>Akses halaman /dashboard</td>
+      <td>Tampil statistik total pemesanan, pengadaan, status, dan grafik ringkasan</td>
+      <td>Dashboard tampil dengan data statistik seluruh pengajuan</td>
+      <td class="c">Sesuai</td><td>Halaman dapat diakses</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="cap">Tabel 3.7 Pengujian Halaman Persetujuan (Role: Kepala Sekolah)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Halaman Persetujuan</td>
+      <td>Akses halaman /approval</td>
+      <td>Tampil daftar pemesanan dan pengadaan yang menunggu persetujuan</td>
+      <td>Daftar pengajuan tampil dengan tab filter status</td>
+      <td class="c">Sesuai</td><td>Halaman dapat diakses</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Filter Tab Status</td>
+      <td>Klik tab "Menunggu Persetujuan"</td>
+      <td>Hanya pengajuan berstatus menunggu yang tampil</td>
+      <td>Filter berfungsi, data tersaring sesuai status</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Setujui Pemesanan</td>
+      <td>Pilih pemesanan PES/2026/001, klik Setujui, isi catatan: "Segera diproses"</td>
+      <td>Status berubah "disetujui", notifikasi dikirim ke Guru</td>
+      <td>Status berhasil diubah menjadi disetujui, notifikasi terkirim</td>
+      <td class="c">Sesuai</td><td>Catatan tersimpan di detail pengajuan</td>
+    </tr>
+    <tr>
+      <td class="no">4.</td><td>Tolak Pemesanan</td>
+      <td>Pilih pemesanan, klik Tolak, isi alasan: "Anggaran tidak tersedia"</td>
+      <td>Status berubah "ditolak", notifikasi berisi alasan dikirim ke Guru</td>
+      <td>Status berhasil ditolak, notifikasi berisi alasan terkirim</td>
+      <td class="c">Sesuai</td><td>Guru dapat revisi setelah ditolak</td>
+    </tr>
+    <tr>
+      <td class="no">5.</td><td>Tolak Tanpa Alasan</td>
+      <td>Klik Tolak tanpa mengisi alasan penolakan</td>
+      <td>Muncul validasi "Alasan penolakan wajib diisi"</td>
+      <td>Pesan validasi muncul, form tidak terkirim</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">6.</td><td>Setujui Pengadaan</td>
+      <td>Pilih pengadaan PGD/2026/001, klik Setujui</td>
+      <td>Status pengadaan berubah menjadi "disetujui"</td>
+      <td>Status berhasil diubah, notifikasi dikirim ke Admin</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="cap">Tabel 3.8 Pengujian Laporan dan Notifikasi (Role: Kepala Sekolah)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Halaman Laporan</td>
+      <td>Akses halaman /laporan</td>
+      <td>Tampil data ringkasan, tab departemen, jenis barang, status, dan analisis</td>
+      <td>Laporan tampil lengkap dengan semua tab analisis data</td>
+      <td class="c">Sesuai</td><td>Halaman dapat diakses</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Cetak PDF Laporan</td>
+      <td>Klik tombol Cetak/PDF pada halaman laporan</td>
+      <td>Tab baru terbuka dan file PDF otomatis terunduh</td>
+      <td>PDF berhasil diunduh dengan kop surat, tabel lengkap, dan tanda tangan</td>
+      <td class="c">Sesuai</td><td>Nama Kepala Sekolah tampil di kolom tanda tangan</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Halaman Riwayat</td>
+      <td>Akses halaman /riwayat</td>
+      <td>Tampil seluruh riwayat pengajuan yang masuk ke sistem</td>
+      <td>Riwayat seluruh pengajuan tampil</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">4.</td><td>Halaman Notifikasi</td>
+      <td>Akses halaman /notifikasi</td>
+      <td>Tampil notifikasi pengajuan yang perlu ditindaklanjuti</td>
+      <td>Notifikasi tampil sesuai aktivitas yang melibatkan Kepala Sekolah</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">5.</td><td>Akses Halaman Terlarang</td>
+      <td>Akses URL /stok saat login sebagai Kepala Sekolah</td>
+      <td>Halaman "Akses Ditolak" tampil</td>
+      <td>Halaman akses ditolak tampil dengan keterangan role tidak sesuai</td>
+      <td class="c">Sesuai</td><td>Hak akses berhasil dibatasi</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════════════
+     3.6.3 ROLE: ADMIN TU
+══════════════════════════════════════════════════════ -->
+<div class="sub pb">3.6.3 &nbsp; Pengujian Role Admin TU</div>
+
+<div class="cap">Tabel 3.9 Pengujian Login dan Dashboard (Role: Admin TU)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Form Login</td>
+      <td>Email: admin@smkduamei.sch.id<br/>Password: 123456</td>
+      <td>Berhasil login, tampil menu Admin TU lengkap</td>
+      <td>Berhasil login, seluruh menu admin tersedia di sidebar</td>
+      <td class="c">Sesuai</td><td>Data akun Admin TU valid</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Navigasi Sidebar</td>
+      <td>Lihat menu navigasi di sidebar</td>
+      <td>Menu: Beranda, Dashboard, Pemesanan, Pengadaan, Persetujuan, Stok, Laporan, Riwayat, Notifikasi</td>
+      <td>Semua menu admin tampil sesuai hak akses</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Halaman Dashboard</td>
+      <td>Akses halaman /dashboard</td>
+      <td>Tampil statistik dan grafik seluruh pengajuan di sistem</td>
+      <td>Dashboard tampil dengan data lengkap seluruh pengajuan</td>
+      <td class="c">Sesuai</td><td>Halaman dapat diakses</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="cap">Tabel 3.10 Pengujian Pemesanan dan Pengadaan (Role: Admin TU)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Halaman Pemesanan</td>
+      <td>Akses halaman /pemesanan</td>
+      <td>Tampil seluruh data pemesanan dari semua Guru</td>
+      <td>Seluruh pemesanan dari semua pengguna tampil</td>
+      <td class="c">Sesuai</td><td>Admin dapat melihat semua departemen</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Cari Pemesanan</td>
+      <td>Ketik "PES/2026/001" di kolom pencarian</td>
+      <td>Pemesanan dengan nomor tersebut tampil dalam hasil pencarian</td>
+      <td>Pencarian berhasil menampilkan data yang sesuai</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Filter Status Pemesanan</td>
+      <td>Pilih filter status "Disetujui"</td>
+      <td>Hanya pemesanan berstatus disetujui yang tampil</td>
+      <td>Filter berfungsi, data tersaring sesuai status</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">4.</td><td>Halaman Pengadaan</td>
+      <td>Akses halaman /pengadaan</td>
+      <td>Tampil seluruh data pengadaan dari semua unit</td>
+      <td>Seluruh pengadaan dari semua unit tampil</td>
+      <td class="c">Sesuai</td><td>Halaman dapat diakses</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="cap">Tabel 3.11 Pengujian Halaman Persetujuan (Role: Admin TU)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Halaman Persetujuan</td>
+      <td>Akses halaman /approval</td>
+      <td>Tampil daftar seluruh pengajuan dengan tab filter status</td>
+      <td>Halaman persetujuan tampil dengan semua data pengajuan</td>
+      <td class="c">Sesuai</td><td>Halaman dapat diakses</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Proses Pengadaan</td>
+      <td>Pilih pengadaan PGD/2026/001 berstatus disetujui Kepsek, klik Proses</td>
+      <td>Status pengadaan berubah menjadi "diproses"</td>
+      <td>Status berhasil diubah menjadi diproses</td>
+      <td class="c">Sesuai</td><td>Tahap Admin setelah pengadaan disetujui Kepsek</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Selesaikan Pemesanan</td>
+      <td>Pilih pemesanan PES/2026/001, klik Selesai</td>
+      <td>Status berubah "selesai", stok katalog berkurang sesuai jumlah barang</td>
+      <td>Status berhasil diubah, stok katalog berkurang otomatis</td>
+      <td class="c">Sesuai</td><td>Stok otomatis terupdate</td>
+    </tr>
+    <tr>
+      <td class="no">4.</td><td>Selesaikan Pengadaan</td>
+      <td>Pilih pengadaan PGD/2026/001 berstatus diproses, klik Selesai</td>
+      <td>Status berubah "selesai", stok katalog bertambah otomatis</td>
+      <td>Status berhasil diubah, stok katalog bertambah atau item baru dibuat</td>
+      <td class="c">Sesuai</td><td>Item baru dibuat jika belum ada di katalog</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="cap">Tabel 3.12 Pengujian Manajemen Stok (Role: Admin TU)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Halaman Stok</td>
+      <td>Akses halaman /stok</td>
+      <td>Tampil daftar semua barang dengan jumlah stok dan status kondisi</td>
+      <td>Halaman stok tampil dengan ringkasan total jenis, tersedia, menipis, habis</td>
+      <td class="c">Sesuai</td><td>Halaman dapat diakses</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Filter Stok Menipis</td>
+      <td>Klik filter "Menipis" pada halaman stok</td>
+      <td>Hanya barang dengan stok ≤ stok minimum yang tampil</td>
+      <td>Filter berfungsi, hanya item menipis yang ditampilkan</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Filter Stok Habis</td>
+      <td>Klik filter "Habis" pada halaman stok</td>
+      <td>Hanya barang dengan stok = 0 yang tampil</td>
+      <td>Filter berfungsi, hanya item habis yang ditampilkan</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">4.</td><td>Update Stok Manual</td>
+      <td>Klik edit pada barang "Pulpen", ubah stok dari 5 menjadi 20</td>
+      <td>Stok Pulpen berubah menjadi 20 dan nilai inventaris terupdate</td>
+      <td>Stok berhasil diperbarui, nilai inventaris berubah sesuai</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">5.</td><td>Cari Barang di Stok</td>
+      <td>Ketik "Pulpen" di kolom pencarian halaman stok</td>
+      <td>Hanya barang "Pulpen" yang tampil dalam hasil pencarian</td>
+      <td>Pencarian berhasil menampilkan barang yang sesuai</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="cap">Tabel 3.13 Pengujian Laporan (Role: Admin TU)</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Halaman Laporan</td>
+      <td>Akses halaman /laporan</td>
+      <td>Tampil laporan rekap dengan 5 tab analisis data</td>
+      <td>Halaman laporan tampil lengkap</td>
+      <td class="c">Sesuai</td><td>Halaman dapat diakses</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Export Excel</td>
+      <td>Klik tombol Export Excel pada halaman laporan</td>
+      <td>File .xlsx terunduh berisi 5 sheet dengan warna header berbeda tiap sheet</td>
+      <td>File Excel berhasil diunduh dengan 5 sheet data lengkap</td>
+      <td class="c">Sesuai</td><td>Sheet: Ringkasan, Pemesanan, Pengadaan, Departemen, Inventaris</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Cetak PDF Laporan</td>
+      <td>Klik tombol Cetak/PDF pada halaman laporan</td>
+      <td>Tab baru terbuka, PDF otomatis terunduh dengan kop surat dan tanda tangan</td>
+      <td>PDF berhasil diunduh, nama Admin TU tampil di kolom "Dibuat Oleh"</td>
+      <td class="c">Sesuai</td><td>Tanda tangan Dibuat Oleh dan Kepala Sekolah sejajar</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════════════
+     3.6.4 ROLE: ADMIN IT
+══════════════════════════════════════════════════════ -->
+<div class="sub pb">3.6.4 &nbsp; Pengujian Role Admin IT</div>
+
+<div class="cap">Tabel 3.14 Pengujian Fitur untuk Role Admin IT</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Form Login</td>
+      <td>Email: adminit@smkduamei.sch.id<br/>Password: 123456</td>
+      <td>Berhasil login, tampil menu Admin IT termasuk Kelola Akun</td>
+      <td>Berhasil login, seluruh menu admin IT tersedia</td>
+      <td class="c">Sesuai</td><td>Akses setara Admin TU ditambah Kelola Akun</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Halaman Kelola Akun</td>
+      <td>Akses halaman /kelola-akun</td>
+      <td>Tampil daftar seluruh akun pengguna yang terdaftar</td>
+      <td>Daftar pengguna tampil dengan nama, role, jabatan, dan unit</td>
+      <td class="c">Sesuai</td><td>Halaman dapat diakses</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Tambah Akun Baru</td>
+      <td>Klik tambah akun, isi nama: "Budi Santoso", email: budi@smk.id, role: Guru, jabatan: Guru Matematika</td>
+      <td>Akun baru berhasil dibuat dan tampil di daftar pengguna</td>
+      <td>Akun baru berhasil ditambahkan ke sistem</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">4.</td><td>Edit Data Pengguna</td>
+      <td>Pilih akun "Budi Santoso", ubah jabatan menjadi "Guru IPA"</td>
+      <td>Data pengguna berhasil diperbarui</td>
+      <td>Perubahan data tersimpan dan tampil di daftar</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">5.</td><td>Hapus Akun Pengguna</td>
+      <td>Pilih akun "Budi Santoso", klik hapus, konfirmasi hapus</td>
+      <td>Akun terhapus dari sistem dan tidak tampil di daftar</td>
+      <td>Akun berhasil dihapus dari daftar pengguna</td>
+      <td class="c">Sesuai</td><td>Akun yang dihapus tidak dapat login</td>
+    </tr>
+    <tr>
+      <td class="no">6.</td><td>Kelola Katalog Barang</td>
+      <td>Akses /katalog, tambah barang baru: "Spidol Whiteboard", stok: 50, harga: Rp 5.000</td>
+      <td>Barang baru tersimpan dan muncul di katalog dan halaman stok</td>
+      <td>Barang baru berhasil ditambahkan dan tampil di stok</td>
+      <td class="c">Sesuai</td><td>Data barang langsung sinkron ke halaman stok</td>
+    </tr>
+    <tr>
+      <td class="no">7.</td><td>Semua Fitur Admin TU</td>
+      <td>Akses Dashboard, Pemesanan, Pengadaan, Persetujuan, Stok, Laporan, Riwayat</td>
+      <td>Semua halaman dapat diakses dan berfungsi normal</td>
+      <td>Seluruh fitur Admin TU dapat diakses oleh Admin IT</td>
+      <td class="c">Sesuai</td><td>Admin IT memiliki akses penuh setara Admin TU</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════════════
+     3.6.5 AUTENTIKASI & HAK AKSES
+══════════════════════════════════════════════════════ -->
+<div class="sub">3.6.5 &nbsp; Pengujian Autentikasi dan Kontrol Hak Akses</div>
+
+<div class="cap">Tabel 3.15 Pengujian Autentikasi dan Hak Akses Lintas Role</div>
+<table>
+  <thead><tr>
+    <th style="width:4%">No</th><th style="width:14%">Nama Fitur</th>
+    <th style="width:18%">Input</th><th style="width:20%">Ekspetasi Output</th>
+    <th style="width:20%">Hasil Aktual</th><th style="width:7%">Status</th>
+    <th>Keterangan Tambahan</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td class="no">1.</td><td>Akses Tanpa Login</td>
+      <td>Buka URL /dashboard tanpa melakukan login terlebih dahulu</td>
+      <td>Sistem otomatis mengarahkan ke halaman /login</td>
+      <td>Redirect ke halaman login berhasil dilakukan</td>
+      <td class="c">Sesuai</td><td>Semua halaman terproteksi kecuali /login</td>
+    </tr>
+    <tr>
+      <td class="no">2.</td><td>Guru Akses /approval</td>
+      <td>Login sebagai Guru, akses URL /approval secara langsung</td>
+      <td>Halaman "Akses Ditolak" tampil</td>
+      <td>Halaman akses ditolak tampil dengan keterangan role</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">3.</td><td>Guru Akses /laporan</td>
+      <td>Login sebagai Guru, akses URL /laporan secara langsung</td>
+      <td>Halaman "Akses Ditolak" tampil</td>
+      <td>Halaman akses ditolak tampil</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">4.</td><td>Kepsek Akses /stok</td>
+      <td>Login sebagai Kepala Sekolah, akses URL /stok secara langsung</td>
+      <td>Halaman "Akses Ditolak" tampil</td>
+      <td>Halaman akses ditolak tampil</td>
+      <td class="c">Sesuai</td><td>—</td>
+    </tr>
+    <tr>
+      <td class="no">5.</td><td>Logout dari Sistem</td>
+      <td>Klik tombol Keluar pada sidebar, konfirmasi klik "Ya, Keluar"</td>
+      <td>Sesi berakhir, diarahkan kembali ke halaman login</td>
+      <td>Sesi berhasil diakhiri dan halaman login ditampilkan</td>
+      <td class="c">Sesuai</td><td>Modal konfirmasi muncul sebelum logout</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- TANDA TANGAN -->
+<div style="margin-top:40px;">
+  <table style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td style="border:none;width:50%;text-align:center;vertical-align:top;padding:0 16px;">
+        <div>Dibuat oleh,</div>
+        <div style="margin-top:60px;border-top:1px solid #000;padding-top:4px;font-weight:bold;">______________________________</div>
+        <div style="font-size:10pt;">Penyusun</div>
+      </td>
+      <td style="border:none;width:50%;text-align:center;vertical-align:top;padding:0 16px;">
+        <div>Ciputat, <script>document.write(new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}))</script></div>
+        <div>Mengetahui,</div>
+        <div style="margin-top:50px;border-top:1px solid #000;padding-top:4px;font-weight:bold;">______________________________</div>
+        <div style="font-size:10pt;">Kepala Sekolah</div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="footer">
+  Dokumen Rencana Pengujian — Sistem Informasi Pengadaan Internal SMK Dua Mei
+</div>
+</body>
+</html>

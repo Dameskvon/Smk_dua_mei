@@ -27,6 +27,7 @@ export default function RootLayout({
     <html
       lang="id"
       className={`${inter.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
     >
       <body className="h-full bg-gray-50">
         <ClientLayout>{children}</ClientLayout>

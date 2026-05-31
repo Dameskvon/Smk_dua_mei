@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { formatTanggal } from "@/lib/data";
 import StatusBadge from "@/components/StatusBadge";
-import { CheckCircle2, Clock, Send, ThumbsUp, ThumbsDown, PlayCircle, PackageCheck, MessageCircle } from "lucide-react";
+import { CheckCircle2, Clock, Send, ThumbsUp, ThumbsDown, PlayCircle, PackageCheck, MessageCircle, XCircle } from "lucide-react";
 import ProtectedPage from "@/components/ProtectedPage";
 import { useAuth } from "@/lib/auth";
 import { useAppState } from "@/lib/appState";
@@ -271,8 +271,9 @@ export default function ApprovalPage() {
                 {isKepsek && actionMode && (
                   <div className={`border-t pt-4`}>
                     <div className={`rounded-xl p-4 ${actionMode === "approve" ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
-                      <p className={`text-sm font-bold mb-3 ${actionMode === "approve" ? "text-green-700" : "text-red-700"}`}>
-                        {actionMode === "approve" ? "✓ Konfirmasi Persetujuan" : "✗ Konfirmasi Penolakan"}
+                      <p className={`text-sm font-bold mb-3 flex items-center gap-1.5 ${actionMode === "approve" ? "text-green-700" : "text-red-700"}`}>
+                        {actionMode === "approve" ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+                        {actionMode === "approve" ? "Konfirmasi Persetujuan" : "Konfirmasi Penolakan"}
                       </p>
                       <textarea
                         rows={3}
