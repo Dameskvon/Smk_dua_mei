@@ -24,10 +24,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
-  experimental: {
-    outputFileTracingIncludes: {
-      "/api/**/*": ["./src/generated/prisma/**/*"],
-    },
+  outputFileTracingIncludes: {
+    "/api/**/*": ["./src/generated/prisma/**/*"],
   },
 };
 
