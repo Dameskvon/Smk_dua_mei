@@ -54,7 +54,6 @@ export const roleNavLinks: Record<UserRole, { href: string; label: string }[]> =
   admin: [
     { href: "/", label: "Beranda" },
     { href: "/dashboard", label: "Dashboard" },
-    { href: "/pemesanan", label: "Pemesanan" },
     { href: "/pengadaan", label: "Pengadaan" },
     { href: "/approval", label: "Persetujuan" },
     { href: "/stok", label: "Stok" },
@@ -65,7 +64,6 @@ export const roleNavLinks: Record<UserRole, { href: string; label: string }[]> =
   admin_it: [
     { href: "/", label: "Beranda" },
     { href: "/dashboard", label: "Dashboard" },
-    { href: "/pemesanan", label: "Pemesanan" },
     { href: "/pengadaan", label: "Pengadaan" },
     { href: "/approval", label: "Persetujuan" },
     { href: "/stok", label: "Stok" },

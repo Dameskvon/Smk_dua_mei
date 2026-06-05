@@ -166,7 +166,7 @@ export default function PemesananPage() {
   /* ── Success Screen ── */
   if (submitted) {
     return (
-      <ProtectedPage allowedRoles={["guru", "admin", "admin_it"]}>
+      <ProtectedPage allowedRoles={["guru"]}>
         <main className="max-w-lg mx-auto px-4 py-16 text-center animate-fade-in">
           <div className="relative bg-white rounded-3xl shadow-2xl p-10 border border-green-100 overflow-hidden">
             {/* Background accent */}
@@ -239,7 +239,7 @@ export default function PemesananPage() {
   );
 
   return (
-    <ProtectedPage allowedRoles={["guru", "admin", "admin_it"]}>
+    <ProtectedPage allowedRoles={["guru"]}>
       <main className="w-full px-8 py-10">
         {/* Header */}
         <div className="mb-8 animate-slide-up">

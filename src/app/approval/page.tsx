@@ -123,7 +123,7 @@ export default function ApprovalPage() {
           <div className="flex items-center gap-3 flex-wrap">
             {[
               { icon: <PlayCircle size={16} />, label: "Guru Submit", active: false },
-              { icon: <Clock size={16} />, label: "Menunggu Kepala Sekolah", active: isKepsek },
+              { icon: <Clock size={16} />, label: "Pemesanan: Kepsek / Pengadaan: Langsung", active: isKepsek },
               { icon: <CheckCircle2 size={16} />, label: "Disetujui → Admin TU Proses", active: isAdmin },
               { icon: <PackageCheck size={16} />, label: "Selesai", active: false },
             ].map((step, i) => (
@@ -250,7 +250,18 @@ export default function ApprovalPage() {
                   </div>
                 )}
 
-                {/* Tombol aksi Kepala Sekolah */}
+                {/* Tombol Admin TU: Proses langsung pengadaan tanpa persetujuan kepsek */}
+                {isAdmin && selectedItem.jenis === "pengadaan" && selectedItem.status === "menunggu" && (
+                  <div className="border-t pt-4">
+                    <p className="text-xs text-gray-500 mb-3 font-medium">Pengadaan barang tidak memerlukan persetujuan Kepala Sekolah:</p>
+                    <button onClick={handleProses}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#003580] hover:bg-blue-900 text-white text-sm font-semibold rounded-xl transition">
+                      <PlayCircle size={15} /> Mulai Proses Pengadaan
+                    </button>
+                  </div>
+                )}
+
+                {/* Tombol aksi Kepala Sekolah — hanya untuk pemesanan */}
                 {isKepsek && selectedItem.status === "menunggu" && !actionMode && (
                   <div className="border-t pt-4">
                     <p className="text-xs text-gray-500 mb-3 font-medium">Berikan keputusan Anda:</p>

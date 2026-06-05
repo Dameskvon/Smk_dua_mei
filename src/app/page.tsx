@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import {
   ClipboardList, Tag, Search, BarChart3, FileText, Send,
   ShieldCheck, UserCheck, PackageCheck, ArrowRight,
-  TrendingUp, Clock, CheckCircle2,
+  TrendingUp, Clock, CheckCircle2, BookOpen,
 } from "lucide-react";
 
 const bgImages = [
@@ -78,14 +78,32 @@ export default function HomePage() {
       accent: "#0EA5E9",
       light: "#F0F9FF",
     },
-    {
-      icon: <BarChart3 size={28} />,
-      title: "Dashboard & Laporan",
-      desc: "Ringkasan statistik dan rekap seluruh kegiatan pemesanan dan pengadaan.",
-      href: "/dashboard",
-      accent: "#0509ffff",
-      light: "#EEF2FF",
-    },
+    user?.role === "guru"
+      ? {
+          icon: <BookOpen size={28} />,
+          title: "Katalog Barang",
+          desc: "Lihat daftar barang yang tersedia di gudang beserta stok terkini.",
+          href: "/katalog",
+          accent: "#059669",
+          light: "#ECFDF5",
+        }
+      : user?.role === "admin_it"
+      ? {
+          icon: <UserCheck size={28} />,
+          title: "Kelola Akun",
+          desc: "Manajemen akun pengguna sistem — tambah, ubah, dan hapus akun.",
+          href: "/kelola-akun",
+          accent: "#7C3AED",
+          light: "#EDE9FE",
+        }
+      : {
+          icon: <BarChart3 size={28} />,
+          title: "Dashboard & Laporan",
+          desc: "Ringkasan statistik dan rekap seluruh kegiatan pemesanan dan pengadaan.",
+          href: "/dashboard",
+          accent: "#0509ffff",
+          light: "#EEF2FF",
+        },
   ];
 
   const prosedurList = [

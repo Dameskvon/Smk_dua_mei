@@ -2,21 +2,32 @@
 
 import { useState, useEffect } from "react";
 import { useAppState } from "@/lib/appState";
+import { useAuth } from "@/lib/auth";
 import { formatRupiah } from "@/lib/data";
 import { KatalogBarang } from "@/types";
 import Link from "next/link";
 import ItemImage from "@/components/ItemImage";
 import {
   Package, CheckCircle2, AlertTriangle, XCircle, RefreshCw, Coins,
-  ClipboardList, BarChart3, Siren,
+  BarChart3, X, ArrowDownCircle, PlusCircle,
 } from "lucide-react";
 import ProtectedPage from "@/components/ProtectedPage";
 
 type FilterStok = "semua" | "tersedia" | "menipis" | "habis";
 type SortBy = "nama" | "stok_asc" | "stok_desc" | "harga_asc" | "harga_desc";
 
+const keteranganOptions = [
+  "Pemakaian rutin",
+  "Kegiatan sekolah",
+  "Rusak / tidak layak",
+  "Hilang",
+  "Distribusi ke unit",
+  "Lainnya",
+];
+
 export default function StokPage() {
-  const { katalogList, updateKatalogStok, updateKatalogItem } = useAppState();
+  const { katalogList, updateKatalogStok, updateKatalogItem, tambahKatalogItem } = useAppState();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [filterStok, setFilterStok] = useState<FilterStok>("semua");
   const [sortBy, setSortBy] = useState<SortBy>("nama");
@@ -28,9 +39,85 @@ export default function StokPage() {
   const [adjustAmount, setAdjustAmount] = useState<number>(0);
   const [adjustType, setAdjustType] = useState<"masuk" | "keluar">("masuk");
   const [gambarUrlInput, setGambarUrlInput] = useState("");
-  const [riwayatStok, setRiwayatStok] = useState<
-    { id: string; namaBarang: string; tipe: "masuk" | "keluar"; jumlah: number; stokSebelum: number; stokSesudah: number; tanggal: string }[]
-  >([]);
+
+  // ─── Modal Pengeluaran Stok ───────────────────────────────────────────────
+  const [showModalKeluar, setShowModalKeluar] = useState(false);
+  const [keluarBarangId, setKeluarBarangId] = useState("");
+  const [keluarJumlah, setKeluarJumlah] = useState<number>(1);
+  const [keluarKeterangan, setKeluarKeterangan] = useState("Pemakaian rutin");
+  const [keluarKetLainnya, setKeluarKetLainnya] = useState("");
+  const [keluarError, setKeluarError] = useState("");
+  const [keluarSuccess, setKeluarSuccess] = useState("");
+
+  // ─── Modal Tambah Barang ──────────────────────────────────────────────────
+  const [showModalTambah, setShowModalTambah] = useState(false);
+  const [tambahLoading, setTambahLoading] = useState(false);
+  const [tambahError, setTambahError] = useState("");
+  const [tambahSuccess, setTambahSuccess] = useState("");
+  const [tambahForm, setTambahForm] = useState({
+    namaBarang: "", kategori: "", stok: 0, satuan: "",
+    hargaSatuan: 0, deskripsi: "", minStok: 0,
+    gambarEmoji: "📦", gambarUrl: "",
+  });
+
+  const resetTambahForm = () => {
+    setTambahForm({ namaBarang: "", kategori: "", stok: 0, satuan: "", hargaSatuan: 0, deskripsi: "", minStok: 0, gambarEmoji: "📦", gambarUrl: "" });
+    setTambahError(""); setTambahSuccess("");
+  };
+
+  const handleTambahBarang = async () => {
+    if (!tambahForm.namaBarang.trim()) { setTambahError("Nama barang wajib diisi."); return; }
+    if (!tambahForm.kategori.trim()) { setTambahError("Kategori wajib diisi."); return; }
+    if (!tambahForm.satuan.trim()) { setTambahError("Satuan wajib diisi."); return; }
+    if (tambahForm.hargaSatuan <= 0) { setTambahError("Harga satuan harus lebih dari 0."); return; }
+    if (tambahForm.minStok < 0) { setTambahError("Stok minimum tidak boleh negatif."); return; }
+    setTambahLoading(true); setTambahError("");
+    try {
+      await tambahKatalogItem({
+        namaBarang: tambahForm.namaBarang.trim(),
+        kategori: tambahForm.kategori.trim(),
+        stok: tambahForm.stok,
+        satuan: tambahForm.satuan.trim(),
+        hargaSatuan: tambahForm.hargaSatuan,
+        deskripsi: tambahForm.deskripsi.trim(),
+        minStok: tambahForm.minStok,
+        gambarEmoji: tambahForm.gambarEmoji || "📦",
+        gambarUrl: tambahForm.gambarUrl.trim() || undefined,
+      });
+      setTambahSuccess(`Barang "${tambahForm.namaBarang}" berhasil ditambahkan.`);
+      resetTambahForm();
+    } catch {
+      setTambahError("Gagal menyimpan. Coba lagi.");
+    } finally {
+      setTambahLoading(false);
+    }
+  };
+
+  const openModalKeluar = () => {
+    setKeluarBarangId("");
+    setKeluarJumlah(1);
+    setKeluarKeterangan("Pemakaian rutin");
+    setKeluarKetLainnya("");
+    setKeluarError("");
+    setKeluarSuccess("");
+    setShowModalKeluar(true);
+  };
+
+  const handleKeluarStok = () => {
+    const barang = stokData.find((b) => b.id === keluarBarangId);
+    if (!barang) { setKeluarError("Pilih barang terlebih dahulu."); return; }
+    if (keluarJumlah <= 0) { setKeluarError("Jumlah harus lebih dari 0."); return; }
+    if (keluarJumlah > barang.stok) { setKeluarError(`Stok ${barang.namaBarang} hanya ${barang.stok} ${barang.satuan}.`); return; }
+    const stokBaru = Math.max(0, barang.stok - keluarJumlah);
+    setStokData((prev) => prev.map((b) => b.id === barang.id ? { ...b, stok: stokBaru } : b));
+    updateKatalogStok(barang.id, stokBaru);
+    setKeluarError("");
+    setKeluarSuccess(`Stok ${barang.namaBarang} berhasil dikurangi ${keluarJumlah} ${barang.satuan}.`);
+    setKeluarBarangId("");
+    setKeluarJumlah(1);
+    setKeluarKeterangan("Pemakaian rutin");
+    setKeluarKetLainnya("");
+  };
 
   const kategoriList = ["Semua", ...Array.from(new Set(stokData.map((b) => b.kategori)))];
 
@@ -71,33 +158,12 @@ export default function StokPage() {
 
   const handleAdjustStok = (barang: KatalogBarang) => {
     if (adjustAmount <= 0) return;
-    const stokSebelum = barang.stok;
     const stokBaru = adjustType === "masuk" ? barang.stok + adjustAmount : Math.max(0, barang.stok - adjustAmount);
-
-    setStokData((prev) =>
-      prev.map((b) => (b.id === barang.id ? { ...b, stok: stokBaru } : b))
-    );
+    setStokData((prev) => prev.map((b) => (b.id === barang.id ? { ...b, stok: stokBaru } : b)));
     updateKatalogStok(barang.id, stokBaru);
-
-    setRiwayatStok((prev) => [
-      {
-        id: `h${Date.now()}`,
-        namaBarang: barang.namaBarang,
-        tipe: adjustType,
-        jumlah: adjustAmount,
-        stokSebelum,
-        stokSesudah: stokBaru,
-        tanggal: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
-
     setEditingId(null);
     setAdjustAmount(0);
   };
-
-  const formatTanggalPendek = (tanggal: string) =>
-    new Date(tanggal).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
 
   return (
     <ProtectedPage allowedRoles={["kepala_sekolah", "admin", "admin_it"]}>
@@ -109,6 +175,18 @@ export default function StokPage() {
               <h1 className="text-2xl font-extrabold text-[#003580]">Manajemen Stok Barang</h1>
             </div>
             <div className="flex gap-2">
+              <button
+                onClick={() => { resetTambahForm(); setShowModalTambah(true); }}
+                className="flex items-center gap-2 bg-green-600 text-white font-bold px-4 py-2.5 rounded-lg text-sm hover:bg-green-700 transition shadow"
+              >
+                <PlusCircle size={16} /> Tambah Barang
+              </button>
+              <button
+                onClick={openModalKeluar}
+                className="flex items-center gap-2 bg-red-600 text-white font-bold px-4 py-2.5 rounded-lg text-sm hover:bg-red-700 transition shadow"
+              >
+                Catat Pengeluaran
+              </button>
               <Link href="/pengadaan" className="bg-[#FFD700] text-[#003580] font-bold px-4 py-2.5 rounded-lg text-sm hover:bg-yellow-400 transition shadow">
                 Ajukan Pengadaan
               </Link>
@@ -198,7 +276,7 @@ export default function StokPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Tabel Stok */}
-          <div className="lg:col-span-2">
+          <div className={user?.role === "admin" ? "lg:col-span-2" : "lg:col-span-3"}>
             <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -321,104 +399,302 @@ export default function StokPage() {
             </div>
           </div>
 
-          {/* Sidebar: Riwayat & Stok Kritis */}
-          <div className="space-y-6">
-            {/* Barang Perlu Restock */}
-            <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                <h3 className="font-bold text-sm text-red-600 flex items-center gap-2">
-                  <Siren size={16} /> Perlu Restock
+          {/* Sidebar: Ringkasan per Kategori — hanya Admin TU */}
+          {user?.role === "admin" && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow border border-gray-100 p-4">
+                <h3 className="font-bold text-sm text-[#003580] mb-4 flex items-center gap-2">
+                  <BarChart3 size={16} /> Ringkasan per Kategori
                 </h3>
-                <Link href="/pengadaan" className="text-xs text-blue-500 hover:underline">Ajukan Pengadaan</Link>
-              </div>
-              <div className="divide-y divide-gray-50 max-h-[280px] overflow-y-auto">
-                {stokData.filter((b) => b.stok <= b.minStok).length === 0 ? (
-                  <div className="p-6 text-center text-gray-400 text-xs flex flex-col items-center gap-1">
-                    <CheckCircle2 size={20} className="text-green-400" /> Semua stok aman
-                  </div>
-                ) : (
-                  stokData.filter((b) => b.stok <= b.minStok).map((b) => (
-                    <div key={b.id} className="px-4 py-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <ItemImage namaBarang={b.namaBarang} kategori={b.kategori} gambarUrl={b.gambarUrl} gambarEmoji={b.gambarEmoji} size={32} />
-                        <div>
-                          <p className="text-xs font-medium text-gray-800">{b.namaBarang}</p>
-                          <p className="text-xs text-gray-400">
-                            Stok: <span className={b.stok === 0 ? "text-red-600 font-bold" : "text-orange-600 font-bold"}>{b.stok}</span> / Min: {b.minStok} {b.satuan}
-                          </p>
+                <div className="space-y-3">
+                  {Array.from(new Set(stokData.map((b) => b.kategori))).map((kat) => {
+                    const items = stokData.filter((b) => b.kategori === kat);
+                    const totalStok = items.reduce((s, b) => s + b.stok, 0);
+                    const totalNilai = items.reduce((s, b) => s + b.stok * b.hargaSatuan, 0);
+                    return (
+                      <div key={kat} className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-semibold text-gray-700">{kat}</p>
+                          <span className="text-xs text-gray-400">{items.length} item</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-gray-500">Total stok: <span className="font-bold text-[#003580]">{totalStok}</span></p>
+                          <p className="text-xs text-green-600 font-semibold">{formatRupiah(totalNilai)}</p>
                         </div>
                       </div>
-                      <div className="shrink-0">
-                        {b.stok === 0 ? (
-                          <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">Habis</span>
-                        ) : (
-                          <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-semibold">Menipis</span>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
+                    );
+                  })}
+                </div>
               </div>
             </div>
+          )}
+        </div>
+      </main>
 
-            {/* Riwayat Perubahan Stok */}
-            <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-              <div className="p-4 border-b border-gray-100">
-                <h3 className="font-bold text-sm text-[#003580] flex items-center gap-2">
-                  <ClipboardList size={16} /> Riwayat Perubahan Stok
-                </h3>
+      {/* ─── Modal Pengeluaran Stok ─────────────────────────────────────── */}
+      {showModalKeluar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            {/* Header Modal */}
+            <div className="bg-gradient-to-r from-red-600 to-red-500 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 rounded-lg p-1.5">
+                  <ArrowDownCircle size={20} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-white text-base">Catat Pengeluaran Stok</h2>
+                  <p className="text-red-100 text-xs">Kurangi stok barang dari inventaris</p>
+                </div>
               </div>
-              <div className="divide-y divide-gray-50 max-h-[360px] overflow-y-auto">
-                {riwayatStok.map((r) => (
-                  <div key={r.id} className="px-4 py-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-xs font-medium text-gray-800">{r.namaBarang}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{formatTanggalPendek(r.tanggal)}</p>
-                      </div>
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${r.tipe === "masuk" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                        }`}>
-                        {r.tipe === "masuk" ? "+" : "-"}{r.jumlah}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-gray-400">{r.stokSebelum}</span>
-                      <span className="text-xs text-gray-300">→</span>
-                      <span className={`text-xs font-bold ${r.stokSesudah <= 0 ? "text-red-600" : "text-gray-700"}`}>{r.stokSesudah}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <button
+                onClick={() => setShowModalKeluar(false)}
+                className="text-white/70 hover:text-white transition p-1 rounded-lg hover:bg-white/10"
+              >
+                <X size={20} />
+              </button>
             </div>
 
-            {/* Stok per Kategori */}
-            <div className="bg-white rounded-xl shadow border border-gray-100 p-4">
-              <h3 className="font-bold text-sm text-[#003580] mb-4 flex items-center gap-2">
-                <BarChart3 size={16} /> Ringkasan per Kategori
-              </h3>
-              <div className="space-y-3">
-                {Array.from(new Set(stokData.map((b) => b.kategori))).map((kat) => {
-                  const items = stokData.filter((b) => b.kategori === kat);
-                  const totalStok = items.reduce((s, b) => s + b.stok, 0);
-                  const totalNilai = items.reduce((s, b) => s + b.stok * b.hargaSatuan, 0);
+            {/* Body Modal */}
+            <div className="px-6 py-5 space-y-4">
+              {/* Pesan Sukses */}
+              {keluarSuccess && (
+                <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-green-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-green-700 font-medium">{keluarSuccess}</p>
+                </div>
+              )}
+
+              {/* Pilih Barang */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Pilih Barang <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={keluarBarangId}
+                  onChange={(e) => { setKeluarBarangId(e.target.value); setKeluarError(""); setKeluarSuccess(""); }}
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 bg-white"
+                >
+                  <option value="">-- Pilih barang --</option>
+                  {stokData
+                    .slice()
+                    .sort((a, b) => a.namaBarang.localeCompare(b.namaBarang))
+                    .map((b) => (
+                      <option key={b.id} value={b.id} disabled={b.stok === 0}>
+                        {b.namaBarang} — Stok: {b.stok} {b.satuan}{b.stok === 0 ? " (Habis)" : ""}
+                      </option>
+                    ))}
+                </select>
+
+                {/* Preview stok barang terpilih */}
+                {keluarBarangId && (() => {
+                  const b = stokData.find((x) => x.id === keluarBarangId);
+                  if (!b) return null;
+                  const stokLabel = b.stok === 0 ? { color: "text-red-600", bg: "bg-red-50", label: "Habis" }
+                    : b.stok <= b.minStok ? { color: "text-orange-600", bg: "bg-orange-50", label: "Menipis" }
+                      : { color: "text-green-600", bg: "bg-green-50", label: "Tersedia" };
                   return (
-                    <div key={kat} className="bg-gray-50 rounded-lg p-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs font-semibold text-gray-700">{kat}</p>
-                        <span className="text-xs text-gray-400">{items.length} item</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-gray-500">Total stok: <span className="font-bold text-[#003580]">{totalStok}</span></p>
-                        <p className="text-xs text-green-600 font-semibold">{formatRupiah(totalNilai)}</p>
+                    <div className={`mt-2 flex items-center justify-between rounded-lg px-3 py-2 ${stokLabel.bg} border border-gray-100`}>
+                      <span className="text-xs text-gray-600">Stok saat ini</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`font-bold text-sm ${stokLabel.color}`}>{b.stok} {b.satuan}</span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${stokLabel.bg} ${stokLabel.color} border`}>{stokLabel.label}</span>
                       </div>
                     </div>
                   );
-                })}
+                })()}
               </div>
+
+              {/* Jumlah */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Jumlah Keluar <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={stokData.find((b) => b.id === keluarBarangId)?.stok ?? 9999}
+                  value={keluarJumlah || ""}
+                  onChange={(e) => { setKeluarJumlah(parseInt(e.target.value) || 0); setKeluarError(""); setKeluarSuccess(""); }}
+                  placeholder="Masukkan jumlah"
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                />
+              </div>
+
+              {/* Keterangan */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Keterangan</label>
+                <select
+                  value={keluarKeterangan}
+                  onChange={(e) => { setKeluarKeterangan(e.target.value); setKeluarError(""); setKeluarSuccess(""); }}
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 bg-white"
+                >
+                  {keteranganOptions.map((k) => (
+                    <option key={k} value={k}>{k}</option>
+                  ))}
+                </select>
+                {keluarKeterangan === "Lainnya" && (
+                  <input
+                    type="text"
+                    value={keluarKetLainnya}
+                    onChange={(e) => setKeluarKetLainnya(e.target.value)}
+                    placeholder="Tuliskan keterangan..."
+                    className="w-full mt-2 border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  />
+                )}
+              </div>
+
+              {/* Error */}
+              {keluarError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+                  <XCircle size={15} className="text-red-500 shrink-0" />
+                  <p className="text-sm text-red-600">{keluarError}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-5 flex gap-3">
+              <button
+                onClick={() => setShowModalKeluar(false)}
+                className="flex-1 border border-gray-300 text-gray-600 font-semibold rounded-xl py-2.5 text-sm hover:bg-gray-50 transition"
+              >
+                Tutup
+              </button>
+              <button
+                onClick={handleKeluarStok}
+                className="flex-1 bg-red-600 text-white font-bold rounded-xl py-2.5 text-sm hover:bg-red-700 transition flex items-center justify-center gap-2"
+              >
+                Simpan Pengeluaran
+              </button>
             </div>
           </div>
         </div>
-      </main>
+      )}
+      {/* ─── Modal Tambah Barang ────────────────────────────────────────── */}
+      {showModalTambah && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-600 to-green-500 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 rounded-lg p-1.5">
+                  <PlusCircle size={20} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-white text-base">Tambah Barang Baru</h2>
+                  <p className="text-green-100 text-xs">Tambah master data barang ke inventaris</p>
+                </div>
+              </div>
+              <button onClick={() => setShowModalTambah(false)} className="text-white/70 hover:text-white transition p-1 rounded-lg hover:bg-white/10">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              {tambahSuccess && (
+                <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-green-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-green-700 font-medium">{tambahSuccess}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Barang <span className="text-red-500">*</span></label>
+                  <input type="text" value={tambahForm.namaBarang}
+                    onChange={(e) => setTambahForm((f) => ({ ...f, namaBarang: e.target.value }))}
+                    placeholder="Contoh: Kertas HVS A4"
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Kategori <span className="text-red-500">*</span></label>
+                  <input type="text" value={tambahForm.kategori}
+                    onChange={(e) => setTambahForm((f) => ({ ...f, kategori: e.target.value }))}
+                    placeholder="Contoh: ATK"
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Satuan <span className="text-red-500">*</span></label>
+                  <input type="text" value={tambahForm.satuan}
+                    onChange={(e) => setTambahForm((f) => ({ ...f, satuan: e.target.value }))}
+                    placeholder="Contoh: Rim, Pcs, Lusin"
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Stok Awal</label>
+                  <input type="number" min={0} value={tambahForm.stok || ""}
+                    onChange={(e) => setTambahForm((f) => ({ ...f, stok: parseInt(e.target.value) || 0 }))}
+                    placeholder="0"
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Stok Minimum <span className="text-red-500">*</span></label>
+                  <input type="number" min={0} value={tambahForm.minStok || ""}
+                    onChange={(e) => setTambahForm((f) => ({ ...f, minStok: parseInt(e.target.value) || 0 }))}
+                    placeholder="Batas minimum stok"
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Harga Satuan (Rp) <span className="text-red-500">*</span></label>
+                  <input type="number" min={0} value={tambahForm.hargaSatuan || ""}
+                    onChange={(e) => setTambahForm((f) => ({ ...f, hargaSatuan: parseInt(e.target.value) || 0 }))}
+                    placeholder="0"
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Emoji Ikon</label>
+                  <input type="text" value={tambahForm.gambarEmoji}
+                    onChange={(e) => setTambahForm((f) => ({ ...f, gambarEmoji: e.target.value }))}
+                    placeholder="📦"
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Deskripsi</label>
+                  <textarea rows={2} value={tambahForm.deskripsi}
+                    onChange={(e) => setTambahForm((f) => ({ ...f, deskripsi: e.target.value }))}
+                    placeholder="Deskripsi singkat barang..."
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 resize-none" />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">URL Gambar (opsional)</label>
+                  <input type="url" value={tambahForm.gambarUrl}
+                    onChange={(e) => setTambahForm((f) => ({ ...f, gambarUrl: e.target.value }))}
+                    placeholder="https://..."
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+                </div>
+              </div>
+
+              {tambahError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+                  <XCircle size={15} className="text-red-500 shrink-0" />
+                  <p className="text-sm text-red-600">{tambahError}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-5 flex gap-3">
+              <button onClick={() => setShowModalTambah(false)}
+                className="flex-1 border border-gray-300 text-gray-600 font-semibold rounded-xl py-2.5 text-sm hover:bg-gray-50 transition">
+                Tutup
+              </button>
+              <button onClick={handleTambahBarang} disabled={tambahLoading}
+                className="flex-1 bg-green-600 text-white font-bold rounded-xl py-2.5 text-sm hover:bg-green-700 transition flex items-center justify-center gap-2 disabled:opacity-50">
+                {tambahLoading ? "Menyimpan..." : <><PlusCircle size={15} /> Simpan Barang</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </ProtectedPage>
   );
 }

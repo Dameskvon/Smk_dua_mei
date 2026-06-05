@@ -26,6 +26,7 @@ interface AppStateContextType {
   hapusNotif: (id: string) => void;
   updateKatalogStok: (id: string, stokBaru: number) => void;
   updateKatalogItem: (id: string, data: Partial<KatalogBarang>) => void;
+  tambahKatalogItem: (data: Omit<KatalogBarang, "id">) => Promise<void>;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -116,7 +117,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       judul: "Pengajuan Pengadaan Baru",
       pesan: `${namaPemohon} (${data.unitDepartemen}) mengajukan pengadaan ${data.jenisBarang}. Nomor: ${newItem.nomorPengadaan}.`,
       tipe: "info" as const,
-      targetRole: "kepala_sekolah" as const,
+      targetRole: "admin" as const,
       nomorReferensi: newItem.nomorPengadaan,
       jenisForm: "pengadaan" as const,
     };
@@ -304,13 +305,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     patchApi(`/api/katalog/${id}`, data);
   };
 
+  const tambahKatalogItem = async (data: Omit<KatalogBarang, "id">) => {
+    const res = await authFetch("/api/katalog", { method: "POST", body: JSON.stringify(data) });
+    const saved: KatalogBarang = await res.json();
+    setKatalogList((prev) => [...prev, saved]);
+  };
+
   return (
     <AppStateContext.Provider value={{
       permintaanList, pengadaanList, notifikasiList, katalogList, isLoading,
       submitPermintaan, submitPengadaan, revisiPermintaan,
       setujuiItem, tolakItem, prosesItem, selesaikanItem,
       tandaiBacaNotif, tandaiSemuaBaca, hapusNotif,
-      updateKatalogStok, updateKatalogItem,
+      updateKatalogStok, updateKatalogItem, tambahKatalogItem,
     }}>
       {children}
     </AppStateContext.Provider>

@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = requireAuth(req, ["admin", "admin_it"]);
+  const auth = requireAuth(req, ["guru"]);
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
