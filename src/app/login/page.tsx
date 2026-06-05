@@ -135,7 +135,7 @@ export default function LoginPage() {
               ) : (
                 <LogIn size={16} />
               )}
-              {loading ? "Memproses..." : "Masuk ke Sistem"}
+              {loading ? "Memproses..." : "Login"}
             </button>
           </form>
         </div>

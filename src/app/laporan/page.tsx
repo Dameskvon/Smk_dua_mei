@@ -133,7 +133,7 @@ export default function LaporanPage() {
                 target="_blank"
                 className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#003580] text-white text-sm font-bold shadow hover:bg-blue-900 transition"
               >
-                <Printer size={15} /> Cetak / PDF
+                <Printer size={15} /> Cetak Laporan
               </Link>
             </div>
           </div>
