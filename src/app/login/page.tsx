@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -33,8 +33,8 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden bg-white">
       {/* Subtle background decoration */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-[#003580]/[0.03] blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full bg-[#0047AB]/[0.03] blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-125 h-125 rounded-full bg-[#003580]/3 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-150 h-150 rounded-full bg-[#0047AB]/3 blur-3xl" />
 
         {/* Subtle grid pattern */}
         <svg className="absolute inset-0 w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useAppState } from "@/lib/appState";
@@ -207,7 +207,7 @@ export default function StokPage() {
 
         {/* Alert for low stock */}
         {summary.itemPerluRestock > 0 && (
-          <div className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+          <div className="bg-linear-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl p-4 mb-6 flex items-start gap-3">
             <AlertTriangle size={24} className="text-orange-500 shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-sm text-orange-800">Peringatan Stok Rendah</p>
@@ -413,7 +413,7 @@ export default function StokPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
             {/* Header Modal */}
-            <div className="bg-gradient-to-r from-red-600 to-red-500 px-6 py-4 flex items-center justify-between">
+            <div className="bg-linear-to-r from-red-600 to-red-500 px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="bg-white/20 rounded-lg p-1.5">
                   <ArrowDownCircle size={20} className="text-white" />
@@ -552,7 +552,7 @@ export default function StokPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
             {/* Header */}
-            <div className="bg-gradient-to-r from-green-600 to-green-500 px-6 py-4 flex items-center justify-between">
+            <div className="bg-linear-to-r from-green-600 to-green-500 px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="bg-white/20 rounded-lg p-1.5">
                   <PlusCircle size={20} className="text-white" />

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { formatTanggal } from "@/lib/data";
@@ -119,7 +119,7 @@ export default function ApprovalPage() {
         </div>
 
         {/* Alur */}
-        <div className="bg-gradient-to-r from-[#003580] to-[#0047AB] text-white rounded-xl p-5 mb-6 flex flex-wrap gap-4 items-center justify-between">
+        <div className="bg-linear-to-r from-[#003580] to-[#0047AB] text-white rounded-xl p-5 mb-6 flex flex-wrap gap-4 items-center justify-between">
           <div className="flex items-center gap-3 flex-wrap">
             {[
               { icon: <PlayCircle size={16} />, label: "Guru Submit", active: false },
@@ -167,7 +167,7 @@ export default function ApprovalPage() {
           {/* List */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
-              <div className="divide-y divide-gray-50 max-h-[600px] overflow-y-auto">
+              <div className="divide-y divide-gray-50 max-h-150 overflow-y-auto">
                 {filtered.length === 0 ? (
                   <div className="py-16 text-center text-gray-400 text-sm">
                     <CheckCircle2 size={32} className="mx-auto mb-2 text-gray-300" />

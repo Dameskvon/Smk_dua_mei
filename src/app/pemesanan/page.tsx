@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -191,7 +191,7 @@ export default function PemesananPage() {
                   : "Permintaan Anda telah diterima dan diteruskan ke Kepala Sekolah untuk ditinjau."}
               </p>
 
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5 mb-6 text-left">
+              <div className="bg-linear-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5 mb-6 text-left">
                 <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">Nomor Referensi</p>
                 <p className="text-2xl font-mono font-extrabold text-[#003580] tracking-wider">{nomorPesanan}</p>
                 <p className="text-xs text-gray-400 mt-2">Simpan nomor ini untuk memantau status di halaman Riwayat.</p>
@@ -283,7 +283,7 @@ export default function PemesananPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Section 1 — Data Pemesan */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-slide-up delay-150">
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-linear-to-r from-blue-50 to-white">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #003580, #0047AB)" }}>
                 <ClipboardList size={16} className="text-white" />
               </div>
@@ -342,7 +342,7 @@ export default function PemesananPage() {
 
           {/* Section 2 — Daftar Barang */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-slide-up delay-300">
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-white">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-linear-to-r from-amber-50 to-white">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-500">
                 <Package size={16} className="text-white" />
               </div>
@@ -457,7 +457,7 @@ export default function PemesananPage() {
 
           {/* Section 3 — Catatan */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-slide-up delay-500">
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-white">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-linear-to-r from-purple-50 to-white">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-purple-500">
                 <MessageSquare size={16} className="text-white" />
               </div>

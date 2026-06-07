@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useAppState } from "@/lib/appState";
 import { formatRupiah, formatTanggal } from "@/lib/data";
@@ -83,17 +83,17 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-[#003580] to-[#0047AB] text-white rounded-xl shadow p-6">
+          <div className="bg-linear-to-br from-[#003580] to-[#0047AB] text-white rounded-xl shadow p-6">
             <p className="text-blue-200 text-sm mb-1">Total Estimasi Anggaran</p>
             <p className="text-3xl font-extrabold">{formatRupiah(totalAnggaran)}</p>
             <p className="text-blue-300 text-xs mt-2">{pengadaanList.length} item pengadaan</p>
           </div>
-          <div className="bg-gradient-to-br from-[#FFD700] to-[#FFA500] rounded-xl shadow p-6">
+          <div className="bg-linear-to-br from-[#FFD700] to-[#FFA500] rounded-xl shadow p-6">
             <p className="text-yellow-900 text-sm mb-1 font-medium">Anggaran Disetujui</p>
             <p className="text-3xl font-extrabold">{formatRupiah(anggaranDisetujui)}</p>
             <p className="text-yellow-800 text-xs mt-2">{pengadaanList.filter((p) => p.status === "disetujui").length} item disetujui</p>
           </div>
-          <div className="bg-gradient-to-br from-red-500 to-red-700 text-white rounded-xl shadow p-6">
+          <div className="bg-linear-to-br from-red-500 to-red-700 text-white rounded-xl shadow p-6">
             <p className="text-red-100 text-sm mb-1">Anggaran Ditolak</p>
             <p className="text-3xl font-extrabold">{formatRupiah(pengadaanList.filter((p) => p.status === "ditolak").reduce((s, p) => s + p.estimasiHarga, 0))}</p>
             <p className="text-red-200 text-xs mt-2">{pengadaanList.filter((p) => p.status === "ditolak").length} item ditolak</p>

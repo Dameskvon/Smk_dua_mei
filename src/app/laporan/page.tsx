@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useAppState } from "@/lib/appState";
@@ -182,22 +182,22 @@ export default function LaporanPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-[#003580] to-[#0047AB] text-white rounded-xl shadow p-5">
+                <div className="bg-linear-to-br from-[#003580] to-[#0047AB] text-white rounded-xl shadow p-5">
                   <p className="text-blue-200 text-xs mb-1">Total Estimasi Anggaran</p>
                   <p className="text-2xl font-extrabold">{formatRupiah(totalAnggaran)}</p>
                   <p className="text-blue-300 text-xs mt-1">{totalPengadaan} pengajuan</p>
                 </div>
-                <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow p-5">
+                <div className="bg-linear-to-br from-green-500 to-green-600 text-white rounded-xl shadow p-5">
                   <p className="text-green-100 text-xs mb-1">Anggaran Disetujui</p>
                   <p className="text-2xl font-extrabold">{formatRupiah(anggaranDisetujui)}</p>
                   <p className="text-green-200 text-xs mt-1">{totalAnggaran > 0 ? Math.round((anggaranDisetujui / totalAnggaran) * 100) : 0}% dari total</p>
                 </div>
-                <div className="bg-gradient-to-br from-orange-400 to-yellow-500 text-black rounded-xl shadow p-5">
+                <div className="bg-linear-to-br from-orange-400 to-yellow-500 text-black rounded-xl shadow p-5">
                   <p className="text-orange-900 text-xs mb-1 font-medium">Anggaran Menunggu</p>
                   <p className="text-2xl font-extrabold">{formatRupiah(anggaranMenunggu)}</p>
                   <p className="text-orange-800 text-xs mt-1">Belum diproses</p>
                 </div>
-                <div className="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-xl shadow p-5">
+                <div className="bg-linear-to-br from-red-500 to-red-600 text-white rounded-xl shadow p-5">
                   <p className="text-red-100 text-xs mb-1">Anggaran Ditolak</p>
                   <p className="text-2xl font-extrabold">{formatRupiah(anggaranDitolak)}</p>
                   <p className="text-red-200 text-xs mt-1">{totalAnggaran > 0 ? Math.round((anggaranDitolak / totalAnggaran) * 100) : 0}% dari total</p>
@@ -308,7 +308,7 @@ export default function LaporanPage() {
                       <div key={d.unit} className="flex items-center gap-3">
                         <span className="text-xs text-gray-600 w-28 shrink-0 truncate">{d.unit}</span>
                         <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
-                          <div className="bg-gradient-to-r from-[#003580] to-[#0047AB] h-4 rounded-full transition-all" style={{ width: `${Math.max(pct, 2)}%` }} />
+                          <div className="bg-linear-to-r from-[#003580] to-[#0047AB] h-4 rounded-full transition-all" style={{ width: `${Math.max(pct, 2)}%` }} />
                         </div>
                         <span className="text-xs font-semibold text-[#003580] w-28 text-right shrink-0">{formatRupiah(d.totalAnggaran)}</span>
                         <span className="text-xs text-gray-400 w-8 text-right shrink-0">{pct}%</span>
