@@ -12,7 +12,6 @@ interface FormData {
   jabatan: string;
   unitDepartemen: string;
   jenisBarang: string;
-  namaBarang: string;
   spesifikasi: string;
   jumlah: number;
   satuan: string;
@@ -28,7 +27,6 @@ const initialForm: FormData = {
   jabatan: "",
   unitDepartemen: "",
   jenisBarang: "",
-  namaBarang: "",
   spesifikasi: "",
   jumlah: 1,
   satuan: "",
@@ -77,7 +75,6 @@ export default function PengadaanPage() {
     if (!form.jabatan) newErrors.jabatan = "Jabatan wajib diisi";
     if (!form.unitDepartemen) newErrors.unitDepartemen = "Unit/Departemen wajib dipilih";
     if (!form.jenisBarang) newErrors.jenisBarang = "Jenis barang wajib dipilih";
-    if (!form.namaBarang) newErrors.namaBarang = "Nama barang wajib diisi";
     if (!form.spesifikasi) newErrors.spesifikasi = "Spesifikasi wajib diisi";
     if (!form.satuan) newErrors.satuan = "Satuan wajib diisi";
     if (!form.estimasiHarga) newErrors.estimasiHarga = "Estimasi harga wajib diisi";
@@ -271,20 +268,6 @@ export default function PengadaanPage() {
                 </select>
                 {errors.jenisBarang && <p className="text-red-500 text-xs mt-1">{errors.jenisBarang}</p>}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nama Barang <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="namaBarang"
-                  value={form.namaBarang}
-                  onChange={handleChange}
-                  placeholder="Nama spesifik barang yang diadakan"
-                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white ${errors.namaBarang ? "border-red-400" : "border-gray-300"}`}
-                />
-                {errors.namaBarang && <p className="text-red-500 text-xs mt-1">{errors.namaBarang}</p>}
-              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -316,14 +299,14 @@ export default function PengadaanPage() {
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Spesifikasi Lengkap <span className="text-red-500">*</span>
+                  Nama & Spesifikasi Barang <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   name="spesifikasi"
                   value={form.spesifikasi}
                   onChange={handleChange}
                   rows={3}
-                  placeholder="Tuliskan spesifikasi teknis lengkap (merek, tipe, ukuran, kapasitas, dll.)"
+                  placeholder="Tuliskan spesifikasi teknis lengkap"
                   className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none ${errors.spesifikasi ? "border-red-400" : "border-gray-300"}`}
                 />
                 {errors.spesifikasi && <p className="text-red-500 text-xs mt-1">{errors.spesifikasi}</p>}
