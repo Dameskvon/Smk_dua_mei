@@ -38,7 +38,6 @@ export default function StokPage() {
   useEffect(() => { setStokData([...katalogList]); }, [katalogList]);
   const [adjustAmount, setAdjustAmount] = useState<number>(0);
   const [adjustType, setAdjustType] = useState<"masuk" | "keluar">("masuk");
-  const [gambarUrlInput, setGambarUrlInput] = useState("");
 
   // ─── Modal Pengeluaran Stok ───────────────────────────────────────────────
   const [showModalKeluar, setShowModalKeluar] = useState(false);
@@ -345,21 +344,9 @@ export default function StokPage() {
                                   placeholder="Jumlah"
                                   className="w-24 border border-gray-300 rounded px-2 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
                                 />
-                                <input
-                                  type="url"
-                                  value={gambarUrlInput}
-                                  onChange={(e) => setGambarUrlInput(e.target.value)}
-                                  placeholder="URL gambar (opsional)"
-                                  className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                />
                                 <div className="flex gap-1">
                                   <button
-                                    onClick={() => {
-                                      handleAdjustStok(barang);
-                                      if (gambarUrlInput !== (barang.gambarUrl ?? "")) {
-                                        updateKatalogItem(barang.id, { gambarUrl: gambarUrlInput || undefined });
-                                      }
-                                    }}
+                                    onClick={() => handleAdjustStok(barang)}
                                     className="text-xs bg-[#003580] text-white px-2 py-1 rounded font-medium hover:bg-blue-900 transition"
                                   >
                                     Simpan
@@ -374,7 +361,7 @@ export default function StokPage() {
                               </div>
                             ) : (
                               <button
-                                onClick={() => { setEditingId(barang.id); setAdjustAmount(0); setAdjustType("masuk"); setGambarUrlInput(barang.gambarUrl ?? ""); }}
+                                onClick={() => { setEditingId(barang.id); setAdjustAmount(0); setAdjustType("masuk"); }}
                                 className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline"
                               >
                                 Atur Stok
@@ -648,28 +635,12 @@ export default function StokPage() {
                     className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Emoji Ikon</label>
-                  <input type="text" value={tambahForm.gambarEmoji}
-                    onChange={(e) => setTambahForm((f) => ({ ...f, gambarEmoji: e.target.value }))}
-                    placeholder="📦"
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
-                </div>
-
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Deskripsi</label>
                   <textarea rows={2} value={tambahForm.deskripsi}
                     onChange={(e) => setTambahForm((f) => ({ ...f, deskripsi: e.target.value }))}
                     placeholder="Deskripsi singkat barang..."
                     className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 resize-none" />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">URL Gambar (opsional)</label>
-                  <input type="url" value={tambahForm.gambarUrl}
-                    onChange={(e) => setTambahForm((f) => ({ ...f, gambarUrl: e.target.value }))}
-                    placeholder="https://..."
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
                 </div>
               </div>
 
