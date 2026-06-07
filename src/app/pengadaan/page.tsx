@@ -281,7 +281,7 @@ export default function PengadaanPage() {
                   value={form.namaBarang}
                   onChange={handleChange}
                   placeholder="Nama spesifik barang yang diadakan"
-                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.namaBarang ? "border-red-400" : "border-gray-300"}`}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white ${errors.namaBarang ? "border-red-400" : "border-gray-300"}`}
                 />
                 {errors.namaBarang && <p className="text-red-500 text-xs mt-1">{errors.namaBarang}</p>}
               </div>
