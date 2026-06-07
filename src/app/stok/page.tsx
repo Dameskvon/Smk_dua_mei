@@ -175,12 +175,6 @@ export default function StokPage() {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => { resetTambahForm(); setShowModalTambah(true); }}
-                className="flex items-center gap-2 bg-green-600 text-white font-bold px-4 py-2.5 rounded-lg text-sm hover:bg-green-700 transition shadow"
-              >
-                <PlusCircle size={16} /> Tambah Barang
-              </button>
-              <button
                 onClick={openModalKeluar}
                 className="flex items-center gap-2 bg-red-600 text-white font-bold px-4 py-2.5 rounded-lg text-sm hover:bg-red-700 transition shadow"
               >
