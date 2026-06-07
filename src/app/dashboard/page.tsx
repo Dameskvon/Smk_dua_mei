@@ -66,7 +66,6 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-extrabold text-[#003580]">Dashboard</h1>
           </div>
           <div className="flex gap-3 flex-wrap">
-            <Link href="/pemesanan" className="bg-[#003580] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-900 transition shadow">Pemesanan</Link>
             <Link href="/pengadaan" className="bg-[#FFD700] text-[#003580] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-yellow-400 transition shadow">Pengadaan</Link>
             <Link href="/laporan" className="bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition shadow">Laporan</Link>
           </div>
