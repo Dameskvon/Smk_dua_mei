@@ -313,19 +313,17 @@ export default function StokPage() {
                           </td>
                           <td className="px-4 py-3 text-center">
                             {isEditing ? (
-                              <div className="flex flex-col gap-1.5 items-center min-w-[180px]">
-                                <div className="flex gap-1">
+                              <div className="flex items-center gap-2 flex-wrap justify-center">
+                                <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs font-semibold">
                                   <button
                                     onClick={() => setAdjustType("masuk")}
-                                    className={`text-xs px-2 py-1 rounded font-medium transition ${adjustType === "masuk" ? "bg-green-500 text-white" : "bg-gray-100 text-gray-600"
-                                      }`}
+                                    className={`px-3 py-1.5 transition ${adjustType === "masuk" ? "bg-green-500 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
                                   >
                                     Masuk
                                   </button>
                                   <button
                                     onClick={() => setAdjustType("keluar")}
-                                    className={`text-xs px-2 py-1 rounded font-medium transition ${adjustType === "keluar" ? "bg-red-500 text-white" : "bg-gray-100 text-gray-600"
-                                      }`}
+                                    className={`px-3 py-1.5 border-l border-gray-200 transition ${adjustType === "keluar" ? "bg-red-500 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
                                   >
                                     Keluar
                                   </button>
@@ -336,22 +334,20 @@ export default function StokPage() {
                                   value={adjustAmount || ""}
                                   onChange={(e) => setAdjustAmount(parseInt(e.target.value) || 0)}
                                   placeholder="Jumlah"
-                                  className="w-24 border border-gray-300 rounded px-2 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                  className="w-20 border border-gray-300 rounded-lg px-2 py-1.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
                                 />
-                                <div className="flex gap-1">
-                                  <button
-                                    onClick={() => handleAdjustStok(barang)}
-                                    className="text-xs bg-[#003580] text-white px-2 py-1 rounded font-medium hover:bg-blue-900 transition"
-                                  >
-                                    Simpan
-                                  </button>
-                                  <button
-                                    onClick={() => { setEditingId(null); setAdjustAmount(0); }}
-                                    className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded font-medium hover:bg-gray-300 transition"
-                                  >
-                                    Batal
-                                  </button>
-                                </div>
+                                <button
+                                  onClick={() => handleAdjustStok(barang)}
+                                  className="text-xs bg-[#003580] text-white px-3 py-1.5 rounded-lg font-semibold hover:bg-blue-900 transition"
+                                >
+                                  Simpan
+                                </button>
+                                <button
+                                  onClick={() => { setEditingId(null); setAdjustAmount(0); }}
+                                  className="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg font-semibold hover:bg-gray-200 transition"
+                                >
+                                  Batal
+                                </button>
                               </div>
                             ) : (
                               <button
