@@ -38,7 +38,6 @@ export const roleNavLinks: Record<UserRole, { href: string; label: string }[]> =
   guru: [
     { href: "/", label: "Beranda" },
     { href: "/pemesanan", label: "Pemesanan Barang" },
-    { href: "/pengadaan", label: "Pengadaan Barang" },
     { href: "/riwayat", label: "Riwayat" },
     { href: "/katalog", label: "Katalog" },
     { href: "/notifikasi", label: "Notifikasi" },

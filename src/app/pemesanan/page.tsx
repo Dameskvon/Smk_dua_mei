@@ -39,7 +39,7 @@ const prioritasOptions = [
 
 export default function PemesananPage() {
   const { user } = useAuth();
-  const { submitPermintaan, revisiPermintaan, permintaanList, isLoading } = useAppState();
+  const { submitPermintaan, revisiPermintaan, permintaanList, katalogList, isLoading } = useAppState();
   const searchParams = useSearchParams();
 
   const [form, setForm] = useState<FormData>({
@@ -49,6 +49,7 @@ export default function PemesananPage() {
     unitDepartemen: user?.unitDepartemen ?? "",
   });
   const [barangList, setBarangList] = useState<BarangItem[]>([{ ...initialBarang, id: "1" }]);
+  const [barangKategori, setBarangKategori] = useState<Record<string, string>>({});
   const [barangFoto, setBarangFoto] = useState<Record<string, { id: string; name: string; preview: string }[]>>({});
   const [submitted, setSubmitted] = useState(false);
   const [nomorPesanan, setNomorPesanan] = useState("");
@@ -363,12 +364,39 @@ export default function PemesananPage() {
                     )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    {/* Jenis Barang */}
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">Jenis Barang <span className="text-red-500">*</span></label>
+                      <select
+                        value={barangKategori[barang.id] ?? ""}
+                        onChange={(e) => {
+                          setBarangKategori((prev) => ({ ...prev, [barang.id]: e.target.value }));
+                          handleBarangChange(barang.id, "namaBarang", "");
+                        }}
+                        className={`${inputBase} border-gray-200`}
+                      >
+                        <option value="">-- Pilih Jenis --</option>
+                        {Array.from(new Set(katalogList.map((k) => k.kategori))).sort().map((kat) => (
+                          <option key={kat} value={kat}>{kat}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* Nama Barang — difilter dari katalog berdasarkan jenis */}
                     <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-gray-600 mb-1">Nama Barang <span className="text-red-500">*</span></label>
-                      <input type="text" value={barang.namaBarang}
+                      <select
+                        value={barang.namaBarang}
                         onChange={(e) => handleBarangChange(barang.id, "namaBarang", e.target.value)}
-                        placeholder="Nama barang"
-                        className={`${inputBase} ${errors[`barang_nama_${index}`] ? "border-red-400" : "border-gray-200"}`} />
+                        disabled={!barangKategori[barang.id]}
+                        className={`${inputBase} ${errors[`barang_nama_${index}`] ? "border-red-400" : "border-gray-200"} disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                      >
+                        <option value="">-- Pilih Barang --</option>
+                        {katalogList
+                          .filter((k) => k.kategori === barangKategori[barang.id])
+                          .map((k) => (
+                            <option key={k.id} value={k.namaBarang}>{k.namaBarang}</option>
+                          ))}
+                      </select>
                       {errors[`barang_nama_${index}`] && <p className="text-red-500 text-xs mt-1">{errors[`barang_nama_${index}`]}</p>}
                     </div>
                     <div>

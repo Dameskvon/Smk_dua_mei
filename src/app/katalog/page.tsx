@@ -46,17 +46,13 @@ export default function KatalogPage() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-          <a href="/" className="hover:text-[#003580]">Beranda</a>
-          <span>/</span>
-          <span className="text-[#003580] font-semibold">Katalog Barang</span>
         </div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold text-[#003580]">Katalog Barang Tersedia</h1>
-            <p className="text-gray-500 text-sm mt-1">Daftar barang yang tersedia di gudang beserta stok terkini.</p>
+            <h1 className="text-2xl font-extrabold text-[#003580]">Katalog Barang</h1>
           </div>
           <Link href="/pemesanan" className="bg-[#003580] text-white font-bold px-5 py-2.5 rounded-lg text-sm hover:bg-blue-900 transition shadow self-start md:self-auto">
-            + Buat Pemesanan
+           Buat Pemesanan
           </Link>
         </div>
       </div>
@@ -128,8 +124,7 @@ export default function KatalogPage() {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <ItemImage namaBarang={barang.namaBarang} kategori={barang.kategori} gambarUrl={barang.gambarUrl} gambarEmoji={barang.gambarEmoji} size={44} />
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${stok.color}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${stok.dot}`} />
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${stok.color}`}>
                         {stok.label}
                       </span>
                     </div>
@@ -183,21 +178,9 @@ export default function KatalogPage() {
                 <div className="flex justify-between"><span className="text-gray-500 text-xs">Stok Saat Ini</span><span className="font-bold text-[#003580]">{selected.stok} {selected.satuan}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500 text-xs">Stok Minimum</span><span className="text-xs">{selected.minStok} {selected.satuan}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500 text-xs">Harga Satuan</span><span className="text-xs font-semibold text-green-600">{formatRupiah(selected.hargaSatuan)}</span></div>
-                <hr />
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Deskripsi</p>
                   <p className="text-xs text-gray-700">{selected.deskripsi}</p>
-                </div>
-                {/* Stok bar */}
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Level Stok</p>
-                  <div className="bg-gray-100 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${selected.stok === 0 ? "bg-red-400" : selected.stok <= selected.minStok ? "bg-orange-400" : "bg-green-400"}`}
-                      style={{ width: `${Math.min(100, (selected.stok / (selected.minStok * 3)) * 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">Min: {selected.minStok} {selected.satuan}</p>
                 </div>
                 <Link
                   href="/pemesanan"

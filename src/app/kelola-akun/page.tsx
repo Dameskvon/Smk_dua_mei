@@ -24,10 +24,10 @@ const emptyForm = (): Omit<AkunUser, "id"> & { password: string; resetPassword: 
 });
 
 const unitList = [
-  "Pimpinan", "Tata Usaha", "IT & Teknologi", "Sarana Prasarana", "Kurikulum",
-  "Kesiswaan", "Humas", "Jurusan TKJ", "Jurusan RPL", "Jurusan AKL",
-  "Jurusan OTKP", "Jurusan BDP", "Jurusan MIPA", "Jurusan Bahasa",
-  "Perpustakaan", "UKS", "BK", "Lab Komputer", "Lab IPA",
+  "Pimpinan", "Tata Usaha", "Sarana Prasarana", "Kurikulum",
+  "Kesiswaan", "Humas", "Jurusan AKL", "Jurusan MPLB",
+  "Jurusan TJKT", "Jurusan DKV", 
+  "Perpustakaan", "UKS", "BK", "Lab Komputer", 
 ];
 
 export default function KelolaAkunPage() {
@@ -138,8 +138,8 @@ export default function KelolaAkunPage() {
                 Kelola Akun & Hak Akses
               </h1>
             </div>
-            <button onClick={openTambah} className="flex items-center gap-2 px-4 py-2.5 bg-[#003580] hover:bg-blue-900 text-white text-sm font-semibold rounded-xl transition">
-              <Plus size={16} /> Tambah Akun
+            <button onClick={openTambah} className="flex items-center gap-2 px-4 py-2.5 bg-[#0b07ffbe] hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition">
+              Tambah Akun
             </button>
           </div>
         </div>

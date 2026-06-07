@@ -180,7 +180,7 @@ export default function PengadaanPage() {
           <div className="bg-white rounded-xl shadow border border-gray-100 p-6">
             <h2 className="font-bold text-[#003580] text-base mb-5 flex items-center gap-2">
               <span className="bg-[#003580] text-white w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold">1</span>
-              Data Pengaju
+              Data Nama Pengajuan 
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -206,7 +206,7 @@ export default function PengadaanPage() {
                   name="jabatan"
                   value={form.jabatan}
                   onChange={handleChange}
-                  placeholder="Contoh: Kepala Jurusan TKJ"
+                  placeholder="Masukkan Jabatan"
                   className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.jabatan ? "border-red-400" : "border-gray-300"}`}
                 />
                 {errors.jabatan && <p className="text-red-500 text-xs mt-1">{errors.jabatan}</p>}
@@ -238,7 +238,7 @@ export default function PengadaanPage() {
                 >
                   <option value="rendah">Rendah</option>
                   <option value="sedang">Sedang</option>
-                  <option value="tinggi">Tinggi / Mendesak</option>
+                  <option value="tinggi">Tinggi</option>
                 </select>
               </div>
             </div>
@@ -306,7 +306,7 @@ export default function PengadaanPage() {
                   value={form.spesifikasi}
                   onChange={handleChange}
                   rows={3}
-                  placeholder="Tuliskan spesifikasi teknis lengkap"
+                  placeholder="Tuliskan spesifikasi baranng lengkap"
                   className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none ${errors.spesifikasi ? "border-red-400" : "border-gray-300"}`}
                 />
                 {errors.spesifikasi && <p className="text-red-500 text-xs mt-1">{errors.spesifikasi}</p>}
@@ -352,7 +352,7 @@ export default function PengadaanPage() {
                   name="estimasiHarga"
                   value={form.estimasiHarga}
                   onChange={handleChange}
-                  placeholder="Contoh: 5000000"
+                  placeholder="Masukkan Harga Estimasi"
                   min={0}
                   className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.estimasiHarga ? "border-red-400" : "border-gray-300"}`}
                 />
@@ -403,7 +403,7 @@ export default function PengadaanPage() {
                   value={form.tujuanPengadaan}
                   onChange={handleChange}
                   rows={3}
-                  placeholder="Jelaskan mengapa barang ini perlu diadakan, manfaatnya untuk kegiatan sekolah"
+                  placeholder="Berikan Alasan Tujuan pengadaan barang"
                   className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none ${errors.tujuanPengadaan ? "border-red-400" : "border-gray-300"}`}
                 />
                 {errors.tujuanPengadaan && <p className="text-red-500 text-xs mt-1">{errors.tujuanPengadaan}</p>}

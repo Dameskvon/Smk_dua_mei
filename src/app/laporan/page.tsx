@@ -306,13 +306,12 @@ export default function LaporanPage() {
                     const pct = totalAnggaran > 0 ? Math.round((d.totalAnggaran / totalAnggaran) * 100) : 0;
                     return (
                       <div key={d.unit} className="flex items-center gap-3">
-                        <span className="text-xs text-gray-600 w-36 shrink-0 truncate">{d.unit}</span>
-                        <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
-                          <div className="bg-gradient-to-r from-[#003580] to-[#0047AB] h-5 rounded-full transition-all flex items-center px-2" style={{ width: `${Math.max(pct, 5)}%` }}>
-                            {pct > 15 && <span className="text-white text-xs font-bold">{formatRupiah(d.totalAnggaran)}</span>}
-                          </div>
+                        <span className="text-xs text-gray-600 w-28 shrink-0 truncate">{d.unit}</span>
+                        <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
+                          <div className="bg-gradient-to-r from-[#003580] to-[#0047AB] h-4 rounded-full transition-all" style={{ width: `${Math.max(pct, 2)}%` }} />
                         </div>
-                        <span className="text-xs text-gray-500 w-10 text-right shrink-0">{pct}%</span>
+                        <span className="text-xs font-semibold text-[#003580] w-28 text-right shrink-0">{formatRupiah(d.totalAnggaran)}</span>
+                        <span className="text-xs text-gray-400 w-8 text-right shrink-0">{pct}%</span>
                       </div>
                     );
                   })}
@@ -378,15 +377,10 @@ export default function LaporanPage() {
                     return (
                       <div key={kat} className="border border-gray-200 rounded-xl p-4">
                         <p className="text-sm font-bold text-gray-700 mb-2">{kat}</p>
-                        <div className="flex gap-2 mb-2">
+                        <div className="flex gap-2">
                           {normal > 0 && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">{normal} Tersedia</span>}
                           {menipis > 0 && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">{menipis} Menipis</span>}
                           {habis > 0 && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">{habis} Habis</span>}
-                        </div>
-                        <div className="flex h-2 rounded-full overflow-hidden bg-gray-100">
-                          {normal > 0 && <div className="bg-green-400 h-2" style={{ width: `${(normal / items.length) * 100}%` }} />}
-                          {menipis > 0 && <div className="bg-orange-400 h-2" style={{ width: `${(menipis / items.length) * 100}%` }} />}
-                          {habis > 0 && <div className="bg-red-400 h-2" style={{ width: `${(habis / items.length) * 100}%` }} />}
                         </div>
                       </div>
                     );
@@ -512,10 +506,12 @@ export default function LaporanPage() {
                           <td className="px-5 py-3 text-right font-semibold text-[#003580] text-xs">{formatRupiah(sd.totalAnggaran)}</td>
                           <td className="px-5 py-3 text-right font-semibold text-green-600 text-xs">{formatRupiah(sd.disetujui)}</td>
                           <td className="px-5 py-3 text-right">
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${sd.totalAnggaran > 0 && sd.disetujui / sd.totalAnggaran >= 0.5 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                              }`}>
-                              {sd.totalAnggaran > 0 ? Math.round((sd.disetujui / sd.totalAnggaran) * 100) : 0}%
-                            </span>
+                            <div className="flex flex-col items-end gap-0.5">
+                              <span className="text-xs font-bold text-green-700">{formatRupiah(sd.disetujui)}</span>
+                              <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                                {sd.totalAnggaran > 0 ? Math.round((sd.disetujui / sd.totalAnggaran) * 100) : 0}%
+                              </span>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -529,8 +525,7 @@ export default function LaporanPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {prioritasData.map((p) => (
                     <div key={p.prioritas} className={`border rounded-xl p-5 ${prioritasColor(p.prioritas)}`}>
-                      <p className="font-bold text-lg mb-1 flex items-center gap-2">
-                        <Circle size={12} className={p.prioritas === "tinggi" ? "fill-red-500 text-red-500" : p.prioritas === "sedang" ? "fill-yellow-500 text-yellow-500" : "fill-green-500 text-green-500"} />
+                      <p className="font-bold text-lg mb-1">
                         Prioritas {p.prioritas.charAt(0).toUpperCase() + p.prioritas.slice(1)}
                       </p>
                       <div className="space-y-2 mt-3">
@@ -551,7 +546,7 @@ export default function LaporanPage() {
 
               <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
                 <div className="p-5 border-b border-gray-100">
-                  <h2 className="font-bold text-[#003580] text-base">Top 5 Pengadaan Terbesar (by Anggaran)</h2>
+                  <h2 className="font-bold text-[#003580] text-base">Top 5 Pengadaan Terbesar</h2>
                 </div>
                 <div className="divide-y divide-gray-50">
                   {[...pengadaanList].sort((a, b) => b.estimasiHarga - a.estimasiHarga).slice(0, 5).map((p, i) => (

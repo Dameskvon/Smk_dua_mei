@@ -57,7 +57,7 @@ export default function HomePage() {
     {
       icon: <ClipboardList size={28} />,
       title: "Pemesanan Barang",
-      desc: "Ajukan permintaan barang kebutuhan operasional harian sekolah secara mudah dan terstruktur.",
+      desc: "Ajukan permintaan barang kebutuhan operasional harian sekolah secara mudah dan terstruktur",
       href: "/pemesanan",
       accent: "#2563EB",
       light: "#EFF6FF",
@@ -65,7 +65,7 @@ export default function HomePage() {
     {
       icon: <Tag size={28} />,
       title: "Pengadaan Barang",
-      desc: "Ajukan pengadaan barang baru dengan estimasi anggaran dan spesifikasi lengkap.",
+      desc: "Ajukan pengadaan barang baru dengan estimasi anggaran dan spesifikasi lengkap",
       href: "/pengadaan",
       accent: "#0011ffff",
       light: "#EDE9FE",
@@ -73,7 +73,7 @@ export default function HomePage() {
     {
       icon: <Search size={28} />,
       title: "Riwayat & Tracking",
-      desc: "Pantau status pemesanan dan pengadaan barang secara real-time.",
+      desc: "Pantau status pemesanan dan pengadaan barang secara real-time",
       href: "/riwayat",
       accent: "#0EA5E9",
       light: "#F0F9FF",
@@ -82,7 +82,7 @@ export default function HomePage() {
       ? {
           icon: <BookOpen size={28} />,
           title: "Katalog Barang",
-          desc: "Lihat daftar barang yang tersedia di gudang beserta stok terkini.",
+          desc: "Lihat daftar barang yang tersedia di gudang beserta stok terkini",
           href: "/katalog",
           accent: "#059669",
           light: "#ECFDF5",
@@ -91,7 +91,7 @@ export default function HomePage() {
       ? {
           icon: <UserCheck size={28} />,
           title: "Kelola Akun",
-          desc: "Manajemen akun pengguna sistem — tambah, ubah, dan hapus akun.",
+          desc: "Manajemen akun pengguna sistem — tambah, ubah, dan hapus akun",
           href: "/kelola-akun",
           accent: "#7C3AED",
           light: "#EDE9FE",
@@ -99,7 +99,7 @@ export default function HomePage() {
       : {
           icon: <BarChart3 size={28} />,
           title: "Dashboard & Laporan",
-          desc: "Ringkasan statistik dan rekap seluruh kegiatan pemesanan dan pengadaan.",
+          desc: "Ringkasan statistik dan rekap seluruh kegiatan pemesanan dan pengadaan",
           href: "/dashboard",
           accent: "#0509ffff",
           light: "#EEF2FF",
@@ -107,11 +107,11 @@ export default function HomePage() {
   ];
 
   const prosedurList = [
-    { step: "01", title: "Isi Formulir",      desc: "Lengkapi data diri, unit, dan daftar barang.",              icon: <FileText size={18} /> },
-    { step: "02", title: "Kirim Permintaan",  desc: "Submit dan dapatkan nomor referensi otomatis.",             icon: <Send size={18} /> },
-    { step: "03", title: "Verifikasi Admin",  desc: "Tim pengadaan memverifikasi dan memproses.",                icon: <ShieldCheck size={18} /> },
-    { step: "04", title: "Persetujuan",       desc: "Kepala sekolah memberikan persetujuan.",                    icon: <UserCheck size={18} /> },
-    { step: "05", title: "Selesai",           desc: "Barang disiapkan dan diserahkan sesuai jadwal.",            icon: <PackageCheck size={18} /> },
+    { step: "01", title: "Isi Formulir",      desc: "Lengkapi data diri dan daftar barang",                     icon: <FileText size={18} /> },
+    { step: "02", title: "Kirim Permintaan",  desc: "Submit dan dapatkan nomor referensi otomatis",             icon: <Send size={18} /> },
+    { step: "03", title: "Verifikasi Data",   desc: "Melakukan verifikasi data",                                icon: <ShieldCheck size={18} /> },
+    { step: "04", title: "Persetujuan",       desc: "Kepala sekolah memberikan persetujuan",                    icon: <UserCheck size={18} /> },
+    { step: "05", title: "Selesai",           desc: "Barang disiapkan dan diserahkan sesuai jadwal",            icon: <PackageCheck size={18} /> },
   ];
 
   return (
@@ -156,21 +156,9 @@ export default function HomePage() {
 
           <p className="text-slate-1000 text-base md:text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
             Platform digital terintegrasi untuk pengelolaan permintaan dan pengadaan barang
-            kebutuhan internal sekolah secara efisien, transparan, dan terstruktur.
+            kebutuhan internal sekolah secara efisien, transparan, dan terstruktur
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/pemesanan"
-              className="flex items-center justify-center gap-2 font-bold px-8 py-3.5 rounded-xl text-sm transition shadow-md hover:-translate-y-0.5 text-white"
-              style={{ background: "linear-gradient(135deg, #2563EB, #1D4ED8)" }}>
-              <ClipboardList size={16} /> Buat Pemesanan
-            </Link>
-            <Link href="/pengadaan"
-              className="flex items-center justify-center gap-2 font-bold px-8 py-3.5 rounded-xl text-sm transition border hover:-translate-y-0.5"
-              style={{ borderColor: "#2563EB", color: "#1D4ED8", background: "rgba(255,255,255,0.80)" }}>
-              <Tag size={16} /> Ajukan Pengadaan <ArrowRight size={14} />
-            </Link>
-          </div>
         </div>
 
       </section>
@@ -282,26 +270,76 @@ export default function HomePage() {
         </div>
 
         <div className="relative z-10 max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full mb-4 bg-white/15 text-blue-100 border border-white/20">
-             Mulai sekarang
-          </div>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-3">
-            Butuh Barang untuk Kegiatan Sekolah?
-          </h2>
-          <p className="text-blue-100/80 text-sm mb-8">
-            Ajukan permintaan sekarang dan tim pengadaan kami akan segera memprosesnya.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/pemesanan"
-              className="flex items-center justify-center gap-2 bg-white font-bold px-8 py-3 rounded-xl text-sm shadow hover:bg-blue-50 transition"
-              style={{ color: "#2563EB" }}>
-              <ClipboardList size={15} /> Mulai Pemesanan
-            </Link>
-            <Link href="/riwayat"
-              className="flex items-center justify-center gap-2 font-bold px-8 py-3 rounded-xl text-sm border border-white/30 text-white hover:bg-white/10 transition">
-              <Search size={15} /> Cek Status Pesanan
-            </Link>
-          </div>
+          {user?.role === "kepala_sekolah" ? (
+            <>
+              <div className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full mb-4 bg-white/15 text-blue-100 border border-white/20">
+                Persetujuan
+              </div>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-3">
+                Ada Pengajuan Menunggu Persetujuan?
+              </h2>
+              <p className="text-blue-100/80 text-sm mb-8">
+                Tinjau dan berikan keputusan atas pengajuan pemesanan maupun pengadaan barang yang masuk
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href="/approval"
+                  className="flex items-center justify-center gap-2 bg-white font-bold px-8 py-3 rounded-xl text-sm shadow hover:bg-blue-50 transition"
+                  style={{ color: "#2563EB" }}>
+                  <ShieldCheck size={15} /> Lihat Persetujuan
+                </Link>
+                <Link href="/dashboard"
+                  className="flex items-center justify-center gap-2 font-bold px-8 py-3 rounded-xl text-sm border border-white/30 text-white hover:bg-white/10 transition">
+                  <BarChart3 size={15} /> Buka Dashboard
+                </Link>
+              </div>
+            </>
+          ) : user?.role === "admin" || user?.role === "admin_it" ? (
+            <>
+              <div className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full mb-4 bg-white/15 text-blue-100 border border-white/20">
+                Kelola Operasional
+              </div>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-3">
+                Pantau & Kelola Seluruh Pengajuan
+              </h2>
+              <p className="text-blue-100/80 text-sm mb-8">
+                Proses permintaan masuk, kelola stok barang, dan pantau anggaran pengadaan secara real-time
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href="/stok"
+                  className="flex items-center justify-center gap-2 bg-white font-bold px-8 py-3 rounded-xl text-sm shadow hover:bg-blue-50 transition"
+                  style={{ color: "#2563EB" }}>
+                  <FileText size={15} /> Kelola Stok
+                </Link>
+                <Link href="/dashboard"
+                  className="flex items-center justify-center gap-2 font-bold px-8 py-3 rounded-xl text-sm border border-white/30 text-white hover:bg-white/10 transition">
+                  <BarChart3 size={15} /> Buka Dashboard
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="inline-flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full mb-4 bg-white/15 text-blue-100 border border-white/20">
+                Mulai sekarang
+              </div>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-3">
+                Butuh Barang untuk Kegiatan Sekolah?
+              </h2>
+              <p className="text-blue-100/80 text-sm mb-8">
+                Ajukan permintaan sekarang dan segera diproses untuk kebutuhan operasional sekolah yang lebih lancar
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href="/pemesanan"
+                  className="flex items-center justify-center gap-2 bg-white font-bold px-8 py-3 rounded-xl text-sm shadow hover:bg-blue-50 transition"
+                  style={{ color: "#2563EB" }}>
+                  <ClipboardList size={15} /> Mulai Pemesanan
+                </Link>
+                <Link href="/riwayat"
+                  className="flex items-center justify-center gap-2 font-bold px-8 py-3 rounded-xl text-sm border border-white/30 text-white hover:bg-white/10 transition">
+                  <Search size={15} /> Cek Status Pesanan
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </section>
     </main>

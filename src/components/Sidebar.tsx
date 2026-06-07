@@ -193,7 +193,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-5 leading-relaxed text-center">
-              Anda akan diarahkan ke halaman login, pastikan semua pekerjaan sudah tersimpan.
+              Anda akan diarahkan ke halaman login, pastikan semua pekerjaan sudah tersimpan sebelum keluar
             </p>
             <div className="flex gap-2.5">
               <button

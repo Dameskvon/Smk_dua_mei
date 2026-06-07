@@ -123,8 +123,8 @@ export default function ApprovalPage() {
           <div className="flex items-center gap-3 flex-wrap">
             {[
               { icon: <PlayCircle size={16} />, label: "Guru Submit", active: false },
-              { icon: <Clock size={16} />, label: "Pemesanan: Kepsek / Pengadaan: Langsung", active: isKepsek },
-              { icon: <CheckCircle2 size={16} />, label: "Disetujui → Admin TU Proses", active: isAdmin },
+              { icon: <Clock size={16} />, label: "Verifikasi Persetujuan", active: isKepsek },
+              { icon: <CheckCircle2 size={16} />, label: "Melakukan Proses", active: isAdmin },
               { icon: <PackageCheck size={16} />, label: "Selesai", active: false },
             ].map((step, i) => (
               <div key={i} className="flex items-center gap-2">
@@ -148,7 +148,7 @@ export default function ApprovalPage() {
         <div className="flex gap-2 mb-4 flex-wrap">
           {([
             { key: "menunggu", label: "Menunggu Persetujuan", count: menungguCount },
-            { key: "disetujui", label: "Disetujui / Diproses", count: disetujuiCount },
+            { key: "disetujui", label: "Disetujui", count: disetujuiCount },
             { key: "ditolak", label: "Ditolak", count: ditolakCount },
             { key: "semua", label: "Semua", count: allItems.length },
           ] as { key: TabView; label: string; count: number }[]).map((t) => (

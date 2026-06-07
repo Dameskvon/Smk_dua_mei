@@ -14,7 +14,7 @@ export default function Footer() {
             </div>
           </div>
           <p className="text-sm text-gray-500 leading-relaxed">
-            Sistem Informasi Pemesanan dan Pengadaan Barang Internal SMK Dua Mei.
+            Sistem Informasi Pemesanan dan Pengadaan Barang Internal SMK Dua Mei
           </p>
         </div>
 
