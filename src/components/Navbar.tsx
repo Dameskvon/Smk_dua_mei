@@ -78,7 +78,7 @@ export default function Navbar() {
                     <User size={14} className="text-[#003580]" />
                   </div>
                   <div className="text-left">
-                    <p className="text-white text-xs font-semibold leading-tight max-w-[120px] truncate">{user.nama.split(",")[0]}</p>
+                    <p className="text-white text-xs font-semibold leading-tight max-w-30 truncate">{user.nama.split(",")[0]}</p>
                     <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${roleColor[user.role]}`}>
                       {roleLabel[user.role]}
                     </span>

@@ -427,11 +427,11 @@ export default function PengadaanPage() {
           {/* Submit */}
           <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2 pb-8">
             <button type="button" onClick={handleReset}
-              className="flex items-center justify-center gap-2 px-8 py-3 rounded-xl border border-orange-300 bg-orange-50 text-orange-600 font-semibold text-sm hover:bg-orange-100 hover:border-orange-400 transition min-w-[160px]">
+              className="flex items-center justify-center gap-2 px-8 py-3 rounded-xl border border-orange-300 bg-orange-50 text-orange-600 font-semibold text-sm hover:bg-orange-100 hover:border-orange-400 transition min-w-40">
               <RotateCcw size={15} /> Reset Form
             </button>
             <button type="submit"
-              className="flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-white font-bold text-sm transition shadow-lg hover:shadow-xl hover:-translate-y-0.5 min-w-[160px]"
+              className="flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-white font-bold text-sm transition shadow-lg hover:shadow-xl hover:-translate-y-0.5 min-w-40"
               style={{ background: "linear-gradient(135deg, #003580 0%, #0047AB 100%)" }}>
               <Send size={15} /> Ajukan Pengadaan
             </button>

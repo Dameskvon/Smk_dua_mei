@@ -144,7 +144,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 <span className="flex-1">{link.label}</span>
 
                 {isNotif && unreadCount > 0 && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${isActive ? "bg-white/25 text-white" : "bg-red-500 text-white"
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-4.5 text-center ${isActive ? "bg-white/25 text-white" : "bg-red-500 text-white"
                     }`}>
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
