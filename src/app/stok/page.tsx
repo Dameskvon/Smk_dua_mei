@@ -165,7 +165,7 @@ export default function StokPage() {
   };
 
   return (
-    <ProtectedPage allowedRoles={["kepala_sekolah", "admin", "admin_it"]}>
+    <ProtectedPage allowedRoles={["guru", "kepala_sekolah", "admin", "admin_it"]}>
       <main className="w-full px-8 py-10">
         {/* Header */}
         <div className="mb-6">
