@@ -2,18 +2,34 @@
 
 import { useState } from "react";
 import { useAppState } from "@/lib/appState";
+import { useAuth } from "@/lib/auth";
 import { formatRupiah } from "@/lib/data";
 import { KatalogBarang } from "@/types";
 import Link from "next/link";
 import ItemImage from "@/components/ItemImage";
-import { Package, AlertTriangle, XCircle, X } from "lucide-react";
+import { Package, AlertTriangle, XCircle, X, Trash2 } from "lucide-react";
 
 export default function KatalogPage() {
-  const { katalogList } = useAppState();
+  const { katalogList, hapusKatalogItem } = useAppState();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [kategori, setKategori] = useState("Semua");
   const [filterStok, setFilterStok] = useState<"semua" | "tersedia" | "menipis" | "habis">("semua");
   const [selected, setSelected] = useState<KatalogBarang | null>(null);
+  const [hapusTarget, setHapusTarget] = useState<KatalogBarang | null>(null);
+  const [hapusLoading, setHapusLoading] = useState(false);
+
+  const handleHapusBarang = async () => {
+    if (!hapusTarget) return;
+    setHapusLoading(true);
+    try {
+      await hapusKatalogItem(hapusTarget.id);
+      if (selected?.id === hapusTarget.id) setSelected(null);
+    } finally {
+      setHapusLoading(false);
+      setHapusTarget(null);
+    }
+  };
 
   const kategoriList = ["Semua", ...Array.from(new Set(katalogList.map((b) => b.kategori)))];
 
@@ -165,7 +181,18 @@ export default function KatalogPage() {
             <div className="bg-white rounded-xl border border-blue-200 shadow p-5 sticky top-24">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-[#003580] text-sm">Detail Barang</h3>
-                <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+                <div className="flex items-center gap-3">
+                  {(user?.role === "admin" || user?.role === "admin_it") && (
+                    <button
+                      onClick={() => setHapusTarget(selected)}
+                      className="text-red-500 hover:text-red-700 transition"
+                      title="Hapus barang"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                  <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+                </div>
               </div>
               <div className="text-center mb-4">
                 <div className="flex justify-center mb-2">
@@ -176,7 +203,6 @@ export default function KatalogPage() {
               </div>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-gray-500 text-xs">Stok Saat Ini</span><span className="font-bold text-[#003580]">{selected.stok} {selected.satuan}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500 text-xs">Stok Minimum</span><span className="text-xs">{selected.minStok} {selected.satuan}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500 text-xs">Harga Satuan</span><span className="text-xs font-semibold text-green-600">{formatRupiah(selected.hargaSatuan)}</span></div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Deskripsi</p>
@@ -189,12 +215,10 @@ export default function KatalogPage() {
                   Pesan Barang Ini
                 </Link>
                 {(selected.stok === 0 || selected.stok <= selected.minStok) && (
-                  <Link
-                    href="/pengadaan"
-                    className="block text-center bg-[#FFD700] text-[#003580] text-xs font-bold py-2.5 rounded-lg hover:bg-yellow-400 transition"
-                  >
-                    Ajukan Pengadaan
-                  </Link>
+                  <div className="mt-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-700 text-xs rounded-lg">
+                    <AlertTriangle size={16} className="inline mr-2" />
+                    Stok barang ini sedang habis atau di bawah batas minimum.
+                  </div>
                 )}
               </div>
             </div>
@@ -206,6 +230,48 @@ export default function KatalogPage() {
           )}
         </div>
       </div>
+
+      {/* Modal Konfirmasi Hapus */}
+      {hapusTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-red-600 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 rounded-lg p-1.5">
+                  <Trash2 size={18} className="text-white" />
+                </div>
+                <h2 className="font-bold text-white text-base">Hapus Barang</h2>
+              </div>
+              <button onClick={() => setHapusTarget(null)} className="text-white/70 hover:text-white transition p-1 rounded-lg hover:bg-white/10">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-700 mb-1">Anda akan menghapus barang:</p>
+              <p className="font-bold text-gray-900 mb-1">{hapusTarget.namaBarang}</p>
+              <p className="text-xs text-gray-500 mb-4">{hapusTarget.kategori} · Stok: {hapusTarget.stok} {hapusTarget.satuan}</p>
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-xs text-red-700 mb-5">
+                Tindakan ini tidak dapat dibatalkan. Data barang akan dihapus permanen dari katalog.
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setHapusTarget(null)}
+                  className="flex-1 border border-gray-300 text-gray-600 font-semibold rounded-xl py-2.5 text-sm hover:bg-gray-50 transition"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleHapusBarang}
+                  disabled={hapusLoading}
+                  className="flex-1 bg-red-600 text-white font-bold rounded-xl py-2.5 text-sm hover:bg-red-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {hapusLoading ? "Menghapus..." : <><Trash2 size={14} /> Hapus</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { useAppState } from "@/lib/appState";
 import { useAuth } from "@/lib/auth";
@@ -7,7 +8,7 @@ import { useEffect, useState } from "react";
 import {
   ClipboardList, Tag, Search, BarChart3, FileText, Send,
   ShieldCheck, UserCheck, PackageCheck, ArrowRight,
-  TrendingUp, Clock, CheckCircle2, BookOpen,
+  TrendingUp, Clock, CheckCircle2, BookOpen, Package, Bell,
 } from "lucide-react";
 
 const bgImages = [
@@ -53,58 +54,34 @@ export default function HomePage() {
     permintaanList.filter((p) => p.status === "selesai" || p.status === "disetujui").length +
     pengadaanList.filter((p) => p.status === "selesai" || p.status === "disetujui").length;
 
-  const fiturList = [
-    {
-      icon: <ClipboardList size={28} />,
-      title: "Pemesanan Barang",
-      desc: "Ajukan permintaan barang kebutuhan operasional harian sekolah secara mudah dan terstruktur",
-      href: "/pemesanan",
-      accent: "#2563EB",
-      light: "#EFF6FF",
-    },
-    {
-      icon: <Tag size={28} />,
-      title: "Pengadaan Barang",
-      desc: "Ajukan pengadaan barang baru dengan estimasi anggaran dan spesifikasi lengkap",
-      href: "/pengadaan",
-      accent: "#0011ffff",
-      light: "#EDE9FE",
-    },
-    {
-      icon: <Search size={28} />,
-      title: "Riwayat & Tracking",
-      desc: "Pantau status pemesanan dan pengadaan barang secara real-time",
-      href: "/riwayat",
-      accent: "#0EA5E9",
-      light: "#F0F9FF",
-    },
-    user?.role === "guru"
-      ? {
-          icon: <BookOpen size={28} />,
-          title: "Katalog Barang",
-          desc: "Lihat daftar barang yang tersedia di gudang beserta stok terkini",
-          href: "/katalog",
-          accent: "#059669",
-          light: "#ECFDF5",
-        }
-      : user?.role === "admin_it"
-      ? {
-          icon: <UserCheck size={28} />,
-          title: "Kelola Akun",
-          desc: "Manajemen akun pengguna sistem — tambah, ubah, dan hapus akun",
-          href: "/kelola-akun",
-          accent: "#7C3AED",
-          light: "#EDE9FE",
-        }
-      : {
-          icon: <BarChart3 size={28} />,
-          title: "Dashboard & Laporan",
-          desc: "Ringkasan statistik dan rekap seluruh kegiatan pemesanan dan pengadaan",
-          href: "/dashboard",
-          accent: "#0509ffff",
-          light: "#EEF2FF",
-        },
-  ];
+  const fiturByRole: Record<string, { icon: React.ReactNode; title: string; desc: string; href: string; accent: string; light: string }[]> = {
+    guru: [
+      { icon: <ClipboardList size={28} />, title: "Pemesanan Barang",   desc: "Ajukan permintaan barang kebutuhan operasional harian sekolah secara mudah dan terstruktur", href: "/pemesanan",   accent: "#2563EB", light: "#EFF6FF" },
+      { icon: <Bell size={28} />,            title: "Notifikasi",         desc: "Pantau pemberitahuan terbaru terkait status pemesanan dan informasi barang",             href: "/notifikasi",  accent: "#4F46E5", light: "#EDE9FE" },
+      { icon: <Search size={28} />,        title: "Riwayat & Tracking", desc: "Pantau status pemesanan dan pengadaan barang secara real-time",                              href: "/riwayat",     accent: "#0EA5E9", light: "#F0F9FF" },
+      { icon: <BookOpen size={28} />,      title: "Katalog Barang",     desc: "Lihat daftar barang yang tersedia di gudang beserta stok terkini",                           href: "/katalog",     accent: "#059669", light: "#ECFDF5" },
+    ],
+    kepala_sekolah: [
+      { icon: <ShieldCheck size={28} />,  title: "Persetujuan",        desc: "Tinjau dan beri keputusan atas pengajuan pemesanan maupun pengadaan barang yang masuk",      href: "/approval",    accent: "#059669", light: "#ECFDF5" },
+      { icon: <TrendingUp size={28} />,   title: "Laporan",            desc: "Rekap anggaran, distribusi barang, dan analisis kegiatan pengadaan sekolah",                  href: "/laporan",     accent: "#2563EB", light: "#EFF6FF" },
+      { icon: <Search size={28} />,       title: "Riwayat & Tracking", desc: "Pantau seluruh riwayat pemesanan dan pengadaan barang secara real-time",                      href: "/riwayat",     accent: "#0EA5E9", light: "#F0F9FF" },
+      { icon: <BarChart3 size={28} />,    title: "Dashboard",          desc: "Ringkasan statistik dan grafik seluruh aktivitas pemesanan dan pengadaan",                    href: "/dashboard",   accent: "#4F46E5", light: "#EEF2FF" },
+    ],
+    admin: [
+      { icon: <Package size={28} />,      title: "Stok Barang",        desc: "Kelola inventaris, atur jumlah stok masuk/keluar, dan pantau barang yang perlu restock",      href: "/stok",        accent: "#2563EB", light: "#EFF6FF" },
+      { icon: <Tag size={28} />,          title: "Pengadaan Barang",   desc: "Proses pengajuan pengadaan barang baru dari seluruh unit di sekolah",                         href: "/pengadaan",   accent: "#4F46E5", light: "#EDE9FE" },
+      { icon: <Search size={28} />,       title: "Riwayat & Tracking", desc: "Pantau seluruh riwayat pemesanan dan pengadaan barang secara real-time",                      href: "/riwayat",     accent: "#0EA5E9", light: "#F0F9FF" },
+      { icon: <BarChart3 size={28} />,    title: "Dashboard & Laporan",desc: "Ringkasan statistik dan rekap seluruh kegiatan pemesanan dan pengadaan",                      href: "/dashboard",   accent: "#7C3AED", light: "#EEF2FF" },
+    ],
+    admin_it: [
+      { icon: <UserCheck size={28} />,    title: "Kelola Akun",        desc: "Manajemen akun pengguna sistem — tambah, ubah, dan hapus akun pengguna",                     href: "/kelola-akun", accent: "#7C3AED", light: "#EDE9FE" },
+      { icon: <Package size={28} />,      title: "Stok Barang",        desc: "Kelola inventaris, atur jumlah stok masuk/keluar, dan pantau barang yang perlu restock",      href: "/stok",        accent: "#2563EB", light: "#EFF6FF" },
+      { icon: <Search size={28} />,       title: "Riwayat & Tracking", desc: "Pantau seluruh riwayat pemesanan dan pengadaan barang secara real-time",                      href: "/riwayat",     accent: "#0EA5E9", light: "#F0F9FF" },
+      { icon: <BarChart3 size={28} />,    title: "Dashboard & Laporan",desc: "Ringkasan statistik dan rekap seluruh kegiatan pemesanan dan pengadaan",                      href: "/dashboard",   accent: "#4F46E5", light: "#EEF2FF" },
+    ],
+  };
+
+  const fiturList = fiturByRole[user?.role ?? "guru"] ?? fiturByRole.guru;
 
   const prosedurList = [
     { step: "01", title: "Isi Formulir",      desc: "Lengkapi data diri dan daftar barang",                     icon: <FileText size={18} /> },

@@ -5,13 +5,15 @@ import { formatRupiah, formatTanggal } from "@/lib/data";
 import StatusBadge from "@/components/StatusBadge";
 import {
   IconClipboard, IconTag, IconHourglass, IconRefresh, IconPencil,
-  IconCheckCircle, IconPackage, IconShieldCheck, IconBell, IconStore, IconXCircle,
+  IconCheckCircle, IconXCircle,
 } from "@/components/Icons";
 import Link from "next/link";
 import ProtectedPage from "@/components/ProtectedPage";
+import { useAuth } from "@/lib/auth";
 
 export default function DashboardPage() {
   const { permintaanList, pengadaanList } = useAppState();
+  const { user } = useAuth();
 
   const allItems = [
     ...permintaanList.map((p) => ({ ...p, jenis: "pemesanan" })),
@@ -30,7 +32,10 @@ export default function DashboardPage() {
 
   const total = stats.totalPemesanan + stats.totalPengadaan;
   const totalAnggaran = pengadaanList.reduce((sum, p) => sum + p.estimasiHarga, 0);
-  const anggaranDisetujui = pengadaanList.filter((p) => p.status === "disetujui").reduce((sum, p) => sum + p.estimasiHarga, 0);
+  const pengadaanDisetujui = pengadaanList.filter((p) => p.status === "disetujui" || p.status === "selesai");
+  const pengadaanDitolak   = pengadaanList.filter((p) => p.status === "ditolak");
+  const anggaranDisetujui  = pengadaanDisetujui.reduce((sum, p) => sum + p.estimasiHarga, 0);
+  const anggaranDitolak    = pengadaanDitolak.reduce((sum, p) => sum + p.estimasiHarga, 0);
 
   const statCards = [
     { label: "Total Pemesanan", value: stats.totalPemesanan, icon: <IconClipboard size={20} />, color: "bg-blue-500", sub: "Permintaan masuk" },
@@ -66,7 +71,11 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-extrabold text-[#003580]">Dashboard</h1>
           </div>
           <div className="flex gap-3 flex-wrap">
-            <Link href="/pengadaan" className="bg-[#FFD700] text-[#003580] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-yellow-400 transition shadow">Pengadaan</Link>
+            {user?.role === "kepala_sekolah" ? (
+              <Link href="/approval" className="bg-[#FFD700] text-[#003580] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-yellow-400 transition shadow">Persetujuan</Link>
+            ) : (
+              <Link href="/pengadaan" className="bg-[#FFD700] text-[#003580] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-yellow-400 transition shadow">Pengadaan</Link>
+            )}
             <Link href="/laporan" className="bg-green-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition shadow">Laporan</Link>
           </div>
         </div>
@@ -91,12 +100,12 @@ export default function DashboardPage() {
           <div className="bg-linear-to-br from-[#FFD700] to-[#FFA500] rounded-xl shadow p-6">
             <p className="text-yellow-900 text-sm mb-1 font-medium">Anggaran Disetujui</p>
             <p className="text-3xl font-extrabold">{formatRupiah(anggaranDisetujui)}</p>
-            <p className="text-yellow-800 text-xs mt-2">{pengadaanList.filter((p) => p.status === "disetujui").length} item disetujui</p>
+            <p className="text-yellow-800 text-xs mt-2">{pengadaanDisetujui.length} item disetujui</p>
           </div>
           <div className="bg-linear-to-br from-red-500 to-red-700 text-white rounded-xl shadow p-6">
             <p className="text-red-100 text-sm mb-1">Anggaran Ditolak</p>
-            <p className="text-3xl font-extrabold">{formatRupiah(pengadaanList.filter((p) => p.status === "ditolak").reduce((s, p) => s + p.estimasiHarga, 0))}</p>
-            <p className="text-red-200 text-xs mt-2">{pengadaanList.filter((p) => p.status === "ditolak").length} item ditolak</p>
+            <p className="text-3xl font-extrabold">{formatRupiah(anggaranDitolak)}</p>
+            <p className="text-red-200 text-xs mt-2">{pengadaanDitolak.length} item ditolak</p>
           </div>
         </div>
 

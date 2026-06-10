@@ -42,7 +42,7 @@ export default function LaporanPage() {
   const totalPemesanan = permintaanList.length;
   const totalPengadaan = pengadaanList.length;
   const totalAnggaran = pengadaanList.reduce((s, p) => s + p.estimasiHarga, 0);
-  const anggaranDisetujui = pengadaanList.filter((p) => p.status === "disetujui").reduce((s, p) => s + p.estimasiHarga, 0);
+  const anggaranDisetujui = pengadaanList.filter((p) => p.status === "disetujui" || p.status === "selesai").reduce((s, p) => s + p.estimasiHarga, 0);
   const anggaranDitolak = pengadaanList.filter((p) => p.status === "ditolak").reduce((s, p) => s + p.estimasiHarga, 0);
   const anggaranMenunggu = pengadaanList.filter((p) => p.status === "menunggu" || p.status === "diproses").reduce((s, p) => s + p.estimasiHarga, 0);
 
@@ -76,7 +76,7 @@ export default function LaporanPage() {
       sumberDana: sd,
       jumlah: items.length,
       totalAnggaran: items.reduce((s, p) => s + p.estimasiHarga, 0),
-      disetujui: items.filter((p) => p.status === "disetujui").reduce((s, p) => s + p.estimasiHarga, 0),
+      disetujui: items.filter((p) => p.status === "disetujui" || p.status === "selesai").reduce((s, p) => s + p.estimasiHarga, 0),
     };
   });
 

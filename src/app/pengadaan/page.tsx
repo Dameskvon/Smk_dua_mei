@@ -433,7 +433,7 @@ export default function PengadaanPage() {
             <button type="submit"
               className="flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-white font-bold text-sm transition shadow-lg hover:shadow-xl hover:-translate-y-0.5 min-w-40"
               style={{ background: "linear-gradient(135deg, #003580 0%, #0047AB 100%)" }}>
-              <Send size={15} /> Ajukan Pengadaan
+              <Send size={15} /> Selesai
             </button>
           </div>
         </form>

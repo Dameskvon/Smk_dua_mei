@@ -3,19 +3,37 @@
 import { useState } from "react";
 import { formatTanggal, formatRupiah } from "@/lib/data";
 import { useAppState } from "@/lib/appState";
+import { useAuth } from "@/lib/auth";
 import StatusBadge from "@/components/StatusBadge";
-import { Search, X } from "lucide-react";
+import { Search, X, Trash2 } from "lucide-react";
 
 type TabType = "semua" | "pemesanan" | "pengadaan";
 type FilterStatus = "semua" | "menunggu" | "diproses" | "disetujui" | "ditolak" | "selesai";
 
 export default function RiwayatPage() {
-  const { permintaanList, pengadaanList } = useAppState();
+  const { permintaanList, pengadaanList, hapusPermintaan, hapusPengadaan } = useAppState();
+  const { user } = useAuth();
   const [tab, setTab] = useState<TabType>("semua");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("semua");
   const [search, setSearch] = useState("");
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<"pemesanan" | "pengadaan" | null>(null);
+
+  const [hapusTarget, setHapusTarget] = useState<{ id: string; label: string; jenis: "pemesanan" | "pengadaan" } | null>(null);
+  const [hapusLoading, setHapusLoading] = useState(false);
+
+  const handleHapus = async () => {
+    if (!hapusTarget) return;
+    setHapusLoading(true);
+    try {
+      if (hapusTarget.jenis === "pemesanan") await hapusPermintaan(hapusTarget.id);
+      else await hapusPengadaan(hapusTarget.id);
+      if (selectedItem === hapusTarget.id) setSelectedItem(null);
+    } finally {
+      setHapusLoading(false);
+      setHapusTarget(null);
+    }
+  };
 
   const pemesananFiltered = permintaanList.filter((p) => {
     const matchStatus = filterStatus === "semua" || p.status === filterStatus;
@@ -125,11 +143,22 @@ export default function RiwayatPage() {
                       <StatusBadge status={item.status} />
                     </div>
                     <p className="text-xs text-gray-600 line-clamp-1">{item.keperluan}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${prioritasColor(item.prioritas)}`}>
-                        {item.prioritas.charAt(0).toUpperCase() + item.prioritas.slice(1)}
-                      </span>
-                      <span className="text-xs text-gray-400">{item.barangList.length} jenis barang</span>
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${prioritasColor(item.prioritas)}`}>
+                          {item.prioritas.charAt(0).toUpperCase() + item.prioritas.slice(1)}
+                        </span>
+                        <span className="text-xs text-gray-400">{item.barangList.length} jenis barang</span>
+                      </div>
+                      {user?.role === "guru" && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setHapusTarget({ id: item.id, label: item.nomorPesanan, jenis: "pemesanan" }); }}
+                          className="text-red-400 hover:text-red-600 transition p-1 rounded"
+                          title="Hapus"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
@@ -162,11 +191,22 @@ export default function RiwayatPage() {
                       <StatusBadge status={item.status} />
                     </div>
                     <p className="text-xs text-gray-600 line-clamp-1">{item.jenisBarang} — {item.spesifikasi}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${prioritasColor(item.prioritas)}`}>
-                        {item.prioritas.charAt(0).toUpperCase() + item.prioritas.slice(1)}
-                      </span>
-                      <span className="text-xs text-gray-400">{formatRupiah(item.estimasiHarga)}</span>
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${prioritasColor(item.prioritas)}`}>
+                          {item.prioritas.charAt(0).toUpperCase() + item.prioritas.slice(1)}
+                        </span>
+                        <span className="text-xs text-gray-400">{formatRupiah(item.estimasiHarga)}</span>
+                      </div>
+                      {(user?.role === "admin" || user?.role === "admin_it") && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setHapusTarget({ id: item.id, label: item.nomorPengadaan, jenis: "pengadaan" }); }}
+                          className="text-red-400 hover:text-red-600 transition p-1 rounded"
+                          title="Hapus"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
@@ -257,6 +297,46 @@ export default function RiwayatPage() {
           ) : null}
         </div>
       </div>
+      {hapusTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-red-600 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 rounded-lg p-1.5">
+                  <Trash2 size={18} className="text-white" />
+                </div>
+                <h2 className="font-bold text-white text-base">Hapus Riwayat</h2>
+              </div>
+              <button onClick={() => setHapusTarget(null)} className="text-white/70 hover:text-white transition p-1 rounded-lg hover:bg-white/10">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-700 mb-1">Anda akan menghapus:</p>
+              <p className="font-bold text-gray-900 mb-1">{hapusTarget.label}</p>
+              <p className="text-xs text-gray-500 mb-4 capitalize">{hapusTarget.jenis}</p>
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-xs text-red-700 mb-5">
+                Tindakan ini tidak dapat dibatalkan. Data akan dihapus permanen.
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setHapusTarget(null)}
+                  className="flex-1 border border-gray-300 text-gray-600 font-semibold rounded-xl py-2.5 text-sm hover:bg-gray-50 transition"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleHapus}
+                  disabled={hapusLoading}
+                  className="flex-1 bg-red-600 text-white font-bold rounded-xl py-2.5 text-sm hover:bg-red-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {hapusLoading ? "Menghapus..." : <><Trash2 size={14} /> Hapus</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -27,6 +27,9 @@ interface AppStateContextType {
   updateKatalogStok: (id: string, stokBaru: number) => void;
   updateKatalogItem: (id: string, data: Partial<KatalogBarang>) => void;
   tambahKatalogItem: (data: Omit<KatalogBarang, "id">) => Promise<void>;
+  hapusKatalogItem: (id: string) => Promise<void>;
+  hapusPermintaan: (id: string) => Promise<void>;
+  hapusPengadaan: (id: string) => Promise<void>;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -311,13 +314,29 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setKatalogList((prev) => [...prev, saved]);
   };
 
+  const hapusKatalogItem = async (id: string) => {
+    await authFetch(`/api/katalog/${id}`, { method: "DELETE" });
+    setKatalogList((prev) => prev.filter((k) => k.id !== id));
+  };
+
+  const hapusPermintaan = async (id: string) => {
+    await authFetch(`/api/pemesanan/${id}`, { method: "DELETE" });
+    setPermintaanList((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const hapusPengadaan = async (id: string) => {
+    await authFetch(`/api/pengadaan/${id}`, { method: "DELETE" });
+    setPengadaanList((prev) => prev.filter((p) => p.id !== id));
+  };
+
   return (
     <AppStateContext.Provider value={{
       permintaanList, pengadaanList, notifikasiList, katalogList, isLoading,
       submitPermintaan, submitPengadaan, revisiPermintaan,
       setujuiItem, tolakItem, prosesItem, selesaikanItem,
       tandaiBacaNotif, tandaiSemuaBaca, hapusNotif,
-      updateKatalogStok, updateKatalogItem, tambahKatalogItem,
+      updateKatalogStok, updateKatalogItem, tambahKatalogItem, hapusKatalogItem,
+      hapusPermintaan, hapusPengadaan,
     }}>
       {children}
     </AppStateContext.Provider>
