@@ -150,13 +150,13 @@ export default function RiwayatPage() {
                         </span>
                         <span className="text-xs text-gray-400">{item.barangList.length} jenis barang</span>
                       </div>
-                      {user?.role === "guru" && (
+                      {(user?.role === "guru" || user?.role === "admin" || user?.role === "admin_it") && (
                         <button
                           onClick={(e) => { e.stopPropagation(); setHapusTarget({ id: item.id, label: item.nomorPesanan, jenis: "pemesanan" }); }}
                           className="text-red-400 hover:text-red-600 transition p-1 rounded"
                           title="Hapus"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={14} /> Hapus
                         </button>
                       )}
                     </div>
@@ -204,7 +204,7 @@ export default function RiwayatPage() {
                           className="text-red-400 hover:text-red-600 transition p-1 rounded"
                           title="Hapus"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={14} /> Hapus
                         </button>
                       )}
                     </div>
@@ -316,7 +316,8 @@ export default function RiwayatPage() {
               <p className="font-bold text-gray-900 mb-1">{hapusTarget.label}</p>
               <p className="text-xs text-gray-500 mb-4 capitalize">{hapusTarget.jenis}</p>
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-xs text-red-700 mb-5">
-                Tindakan ini tidak dapat dibatalkan. Data akan dihapus permanen.
+                <p className="font-medium">Peringatan!</p>
+                <p>Data yang sudah dihapus tidak dapat dikembalikan, Pastikan Anda yakin sebelum melanjutkan</p>
               </div>
               <div className="flex gap-3">
                 <button
